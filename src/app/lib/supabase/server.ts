@@ -1,8 +1,10 @@
+import "server-only";
+
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export function createSupabaseServerClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,8 +20,7 @@ export function createSupabaseServerClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // In some server contexts (like static rendering), cookies can't be set.
-            // That's okay—middleware handles session refresh during navigation.
+            // Ignore if cookies are immutable in this context
           }
         },
       },
