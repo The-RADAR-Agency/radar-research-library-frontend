@@ -1,57 +1,38 @@
+// components/library/SignalsTab.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Bot, CheckCircle, Radio } from "lucide-react";
-import type { Signal, Driver, Trend, EvidenceItem } from "@/lib/data/library";
-import SignalDetailDialog from "./dialogs/SignalDetailDialog";
-import { getDefaultCardImage } from "@/lib/cardImages";
+import type { Signal } from "@/app/lib/data/library";
+import { getDefaultCardImage } from "@/app/lib/cardImages";
 
-type SignalsTabProps = {
+export type SignalsTabProps = {
   signals: Signal[];
-  currentUserId: string;
-  allDrivers: Driver[];
-  allTrends: Trend[];
-  allEvidence: EvidenceItem[];
+  currentUserId?: string;
 };
 
-export default function SignalsTab({
-  signals,
-  currentUserId,
-  allDrivers,
-  allTrends,
-  allEvidence,
-}: SignalsTabProps) {
-  const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
+export default function SignalsTab({ signals }: SignalsTabProps) {
+  const [selected, setSelected] = useState<Signal | null>(null);
   const [cardImages, setCardImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadImages = async () => {
-      const map: Record<string, string> = {};
+      const images: Record<string, string> = {};
       for (const signal of signals) {
-        const headerImage = (signal as any).headerImage as
-          | { url: string }[]
-          | undefined;
-
-        if (headerImage && headerImage.length > 0) {
-          map[signal.id] = headerImage[0].url;
-        } else {
-          map[signal.id] = await getDefaultCardImage(signal.id);
-        }
+        images[signal.id] = await getDefaultCardImage(signal.id);
       }
-      setCardImages(map);
+      setCardImages(images);
     };
-
     loadImages();
   }, [signals]);
 
   if (signals.length === 0) {
     return (
-      <div className="py-12 text-center">
-        <Radio className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-        <h3 className="text-lg font-semibold mb-2">No signals found</h3>
-        <p className="text-muted-foreground">
-          Signals will appear here after reports are processed.
+      <div className="py-16 text-center">
+        <h3 className="text-xl font-headline font-semibold mb-3">No signals found</h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Signals will appear here after processing trend reports.
         </p>
       </div>
     );
@@ -62,83 +43,169 @@ export default function SignalsTab({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {signals.map((signal) => {
           const isVerified = signal.verificationStatus === "Verified";
-          const headerImageSrc = cardImages[signal.id];
+          const cardImage = cardImages[signal.id];
+          const strength = (signal as any).strength || 'moderate_signal';
 
-          const signalDate = (signal as any).date ?? null;
-          const potentialImpact = (signal as any).potentialImpact ?? null;
-          const strength = (signal as any).strength ?? null;
+          // Determine badge color based on strength
+          let strengthBadgeClass = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-sm bg-yellow-500/90 text-white';
+          if (strength === 'strong_signal') {
+            strengthBadgeClass = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-sm bg-green-500/90 text-white';
+          } else if (strength === 'weak_signal') {
+            strengthBadgeClass = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-sm bg-orange-500/90 text-white';
+          }
 
           return (
-            <div
+            <article
               key={signal.id}
-              className="overflow-hidden rounded-xl border bg-card shadow-sm flex flex-col cursor-pointer hover:shadow-lg hover:border-primary transition-all"
-              onClick={() => setSelectedSignal(signal)}
+              className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col"
+              onClick={() => setSelected(signal)}
             >
-              {headerImageSrc && (
-                <div className="relative h-32 w-full overflow-hidden">
+              <div className="relative h-40 overflow-hidden bg-muted">
+                {cardImage && (
                   <img
-                    src={headerImageSrc}
+                    src={cardImage}
                     alt=""
-                    className="h-full w-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                </div>
-              )}
-
-              <div className="flex flex-1 flex-col gap-2 p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold flex-1">
-                    {signal.signalName}
-                  </h3>
+                )}
+                
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
+                
+                <div className="absolute top-3 right-3">
                   {isVerified ? (
-                    <CheckCircle className="h-5 w-5 text-success ml-2" />
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/90 text-success-foreground backdrop-blur-sm">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium">Verified</span>
+                    </div>
                   ) : (
-                    <Bot className="h-5 w-5 text-muted-foreground ml-2" />
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 text-white backdrop-blur-sm">
+                      <Bot className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium">AI Generated</span>
+                    </div>
                   )}
                 </div>
 
+                <div className="absolute top-3 left-3">
+                  <div className={strengthBadgeClass}>
+                    <Radio className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium capitalize">
+                      {strength.replace('_', ' ')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-3 p-5">
+                <h3 className="font-headline font-semibold text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                  {signal.signalName}
+                </h3>
+
                 {signal.description && (
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1">
                     {signal.description}
                   </p>
                 )}
 
-                {(strength || potentialImpact) && (
-                  <div className="flex gap-2 mb-4 flex-wrap">
-                    {strength && (
-                      <Badge variant="secondary">{strength}</Badge>
-                    )}
-                    {potentialImpact && (
-                      <Badge variant="outline">
-                        Impact: {potentialImpact}
+                {signal.topics && signal.topics.length > 0 && (
+                  <div className="mt-auto flex gap-2 flex-wrap">
+                    {signal.topics.slice(0, 3).map((topic) => (
+                      <Badge 
+                        key={topic} 
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        {topic}
+                      </Badge>
+                    ))}
+                    {signal.topics.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{signal.topics.length - 3} more
                       </Badge>
                     )}
                   </div>
                 )}
 
-                {signalDate && (
-                  <div className="mt-auto text-xs text-muted-foreground">
-                    Published:{" "}
-                    {new Date(signalDate).toLocaleDateString()}
+                {signal.steep && signal.steep.length > 0 && (
+                  <div className="flex gap-1.5">
+                    {signal.steep.slice(0, 3).map((steep) => (
+                      <span 
+                        key={steep}
+                        className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-accent text-accent-foreground uppercase tracking-wide"
+                      >
+                        {steep}
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
 
-      {selectedSignal && (
-        <SignalDetailDialog
-          signal={selectedSignal}
-          open={!!selectedSignal}
-          onOpenChange={(open) =>
-            !open && setSelectedSignal(null)
-          }
-          currentUserId={currentUserId}
-          allDrivers={allDrivers}
-          allTrends={allTrends}
-          allEvidence={allEvidence}
-        />
+      {selected && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
+          <div className="bg-card rounded-2xl border shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="relative h-48 overflow-hidden">
+              {cardImages[selected.id] && (
+                <img
+                  src={cardImages[selected.id]}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              )}
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
+              <button
+                onClick={() => setSelected(null)}
+                className="absolute top-4 right-4 text-white hover:text-gray-200 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <div className="text-sm text-muted-foreground mb-2">Signal</div>
+                <h2 className="text-2xl font-headline font-bold">{selected.signalName}</h2>
+              </div>
+
+              {selected.description && (
+                <div>
+                  <div className="text-sm font-medium mb-2">Description</div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {selected.description}
+                  </p>
+                </div>
+              )}
+
+              {selected.topics && selected.topics.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium mb-2">Topics</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {selected.topics.map((topic) => (
+                      <Badge key={topic} variant="secondary">
+                        {topic}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selected.steep && selected.steep.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium mb-2">STEEP Categories</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {selected.steep.map((steep) => (
+                      <Badge key={steep} variant="outline" className="uppercase">
+                        {steep}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

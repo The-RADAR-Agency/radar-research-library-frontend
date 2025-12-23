@@ -1,30 +1,40 @@
-// ================================
-// FILE: components/library/TrendsTab.tsx
-// ================================
-
+// components/library/TrendsTab.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Bot, CheckCircle } from "lucide-react";
-import type { Trend, Driver, Signal, EvidenceItem } from "@/lib/data/library";
+import { Bot, CheckCircle, TrendingUp } from "lucide-react";
+import type { Trend } from "@/app/lib/data/library";
+import { getDefaultCardImage } from "@/app/lib/cardImages";
 
 export type TrendsTabProps = {
   trends: Trend[];
-  currentUserId: string;
-  allDrivers: Driver[];
-  allSignals: Signal[];
-  allEvidence: EvidenceItem[];
+  currentUserId?: string;
 };
 
 export default function TrendsTab({ trends }: TrendsTabProps) {
   const [selected, setSelected] = useState<Trend | null>(null);
+  const [cardImages, setCardImages] = useState<Record<string, string>>({});
+
+  // Pre-generate all card images
+  useEffect(() => {
+    const loadImages = async () => {
+      const images: Record<string, string> = {};
+      for (const trend of trends) {
+        images[trend.id] = await getDefaultCardImage(trend.id);
+      }
+      setCardImages(images);
+    };
+    loadImages();
+  }, [trends]);
 
   if (trends.length === 0) {
     return (
-      <div className="py-12 text-center">
-        <h3 className="text-lg font-semibold mb-2">No trends found</h3>
-        <p className="text-muted-foreground">Trends will appear here after processing.</p>
+      <div className="py-16 text-center">
+        <h3 className="text-xl font-headline font-semibold mb-3">No trends found</h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Trends will appear here after processing trend reports.
+        </p>
       </div>
     );
   }
@@ -32,53 +42,170 @@ export default function TrendsTab({ trends }: TrendsTabProps) {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {trends.map((t) => {
-          const isVerified = t.verificationStatus === "Verified";
+        {trends.map((trend) => {
+          const isVerified = trend.verificationStatus === "Verified";
+          const cardImage = cardImages[trend.id];
+
           return (
-            <div
-              key={t.id}
-              className="overflow-hidden rounded-xl border bg-card shadow-sm flex flex-col cursor-pointer hover:shadow-lg hover:border-primary transition-all"
-              onClick={() => setSelected(t)}
+            <article
+              key={trend.id}
+              className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col"
+              onClick={() => setSelected(trend)}
             >
-              <div className="flex flex-1 flex-col gap-2 p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold flex-1">{t.trendName}</h3>
+              {/* Card Header Image */}
+              <div className="relative h-40 overflow-hidden bg-muted">
+                {cardImage && (
+                  <img
+                    src={cardImage}
+                    alt=""
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                )}
+                
+                {/* Overlay gradient */}
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
+                
+                {/* Verification badge */}
+                <div className="absolute top-3 right-3">
                   {isVerified ? (
-                    <CheckCircle className="h-5 w-5 text-success ml-2" />
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/90 text-success-foreground backdrop-blur-sm">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium">Verified</span>
+                    </div>
                   ) : (
-                    <Bot className="h-5 w-5 text-muted-foreground ml-2" />
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 text-white backdrop-blur-sm">
+                      <Bot className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium">AI Generated</span>
+                    </div>
                   )}
                 </div>
 
-                {t.description && (
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{t.description}</p>
-                )}
-
-                <div className="mt-auto flex gap-2 flex-wrap">
-                  {t.relatedTopics?.slice(0, 3).map((topic) => (
-                    <Badge key={topic} variant="secondary">
-                      {topic}
-                    </Badge>
-                  ))}
+                {/* Trend type badge */}
+                <div className="absolute top-3 left-3">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/90 text-white backdrop-blur-sm">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium capitalize">
+                      {(trend as any).trendType || 'Trend'}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {/* Card Content */}
+              <div className="flex flex-1 flex-col gap-3 p-5">
+                <h3 className="font-headline font-semibold text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                  {trend.trendName}
+                </h3>
+
+                {trend.description && (
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1">
+                    {trend.description}
+                  </p>
+                )}
+
+                {/* Topics */}
+                {trend.relatedTopics && trend.relatedTopics.length > 0 && (
+                  <div className="mt-auto flex gap-2 flex-wrap">
+                    {trend.relatedTopics.slice(0, 3).map((topic) => (
+                      <Badge 
+                        key={topic} 
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        {topic}
+                      </Badge>
+                    ))}
+                    {trend.relatedTopics.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{trend.relatedTopics.length - 3} more
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                {/* STEEP Categories */}
+                {trend.steep && trend.steep.length > 0 && (
+                  <div className="flex gap-1.5">
+                    {trend.steep.slice(0, 3).map((steep) => (
+                      <span 
+                        key={steep}
+                        className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-accent text-accent-foreground uppercase tracking-wide"
+                      >
+                        {steep}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </article>
           );
         })}
       </div>
 
-      {/* Simple inline detail for now */}
+      {/* Detail modal */}
       {selected && (
-        <div className="mt-6 rounded-xl border bg-card p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="text-sm text-muted-foreground">Selected trend</div>
-              <div className="text-lg font-semibold">{selected.trendName}</div>
-              {selected.description && <div className="mt-2 text-sm">{selected.description}</div>}
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
+          <div className="bg-card rounded-2xl border shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="relative h-48 overflow-hidden">
+              {cardImages[selected.id] && (
+                <img
+                  src={cardImages[selected.id]}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              )}
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
+              <button
+                onClick={() => setSelected(null)}
+                className="absolute top-4 right-4 text-white hover:text-gray-200 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+              >
+                ×
+              </button>
             </div>
-            <button className="text-sm underline" onClick={() => setSelected(null)}>
-              Clear
-            </button>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div>
+                <div className="text-sm text-muted-foreground mb-2">Trend</div>
+                <h2 className="text-2xl font-headline font-bold">{selected.trendName}</h2>
+              </div>
+
+              {selected.description && (
+                <div>
+                  <div className="text-sm font-medium mb-2">Description</div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {selected.description}
+                  </p>
+                </div>
+              )}
+
+              {selected.relatedTopics && selected.relatedTopics.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium mb-2">Related Topics</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {selected.relatedTopics.map((topic) => (
+                      <Badge key={topic} variant="secondary">
+                        {topic}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selected.steep && selected.steep.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium mb-2">STEEP Categories</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {selected.steep.map((steep) => (
+                      <Badge key={steep} variant="outline" className="uppercase">
+                        {steep}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

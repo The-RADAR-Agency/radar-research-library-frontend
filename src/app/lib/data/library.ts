@@ -90,10 +90,28 @@ export type LibraryBundle = {
 
 async function safeSelect<T = any>(table: string, columns: string) {
   const { data, error } = await supabase.from(table).select(columns);
+  
+  // DETAILED LOGGING FOR DEBUGGING
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  console.log(`📊 Table: ${table}`);
+  console.log(`📝 Columns: ${columns}`);
+  
   if (error) {
-    console.warn(`Supabase select failed (${table}):`, error.message);
+    console.error(`❌ ERROR:`, {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
     return [] as T[];
   }
+  
+  console.log(`✅ SUCCESS: ${data?.length ?? 0} rows returned`);
+  if (data && data.length > 0) {
+    console.log(`📄 Sample row:`, data[0]);
+  }
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  
   return (data ?? []) as T[];
 }
 
@@ -166,7 +184,7 @@ export async function loadLibraryBundle(): Promise<LibraryBundle> {
   }));
 
   // NOTE: For now, drivers/trends/signals/evidence are minimally shaped.
-  // We’ll add their junction mappings next once the UI is rendering.
+  // We'll add their junction mappings next once the UI is rendering.
   const mappedDrivers: Driver[] = drivers.map((dr: any) => ({
     id: dr.id,
     driverName: dr.driver_name ?? "(Untitled driver)",
