@@ -1,80 +1,103 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { supabase } from "../lib/supabase/client";
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "error" | "ok">(
-    "idle"
-  );
-  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
-  async function sendMagicLink(e: React.FormEvent) {
-    e.preventDefault();
-    setStatus("loading");
-    setMessage("");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage(null)
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-      },
-    });
+    try {
+      const supabase = createClient()
 
-    if (error) {
-      setStatus("error");
-      setMessage(error.message);
-      return;
+      // Check if user exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .single()
+
+      if (!existingUser) {
+        setMessage({ type: 'error', text: 'No account found with this email address.' })
+        setLoading(false)
+        return
+      }
+
+      // Send magic link
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) throw error
+
+      setMessage({ type: 'success', text: 'Check your email for the login link!' })
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message || 'An error occurred' })
+    } finally {
+      setLoading(false)
     }
-
-    setStatus("ok");
-    setMessage(
-      "We’ve sent you a secure sign-in link. Open the email and click the link to finish signing in."
-    );
   }
 
   return (
-    <main className="min-h-screen px-8 py-12">
-      <div className="mx-auto max-w-md">
-        <h1 className="text-2xl font-semibold">Sign in</h1>
+    <div className="min-h-screen flex items-center justify-center bg-radar-warm-neutral">
+      <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-card">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-headline font-bold mb-2">RADAR Library</h1>
+          <p className="text-muted-foreground">Sign in to access the research library</p>
+        </div>
 
-        <p className="mt-2 text-sm text-neutral-600">
-          Enter your email and we’ll send you a secure sign-in link.
-          <br />
-          <span className="text-neutral-500">
-            No password required.
-          </span>
-        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium mb-2">
+              Email address
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              className="w-full px-4 py-2.5 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
 
-        <form onSubmit={sendMagicLink} className="mt-6 space-y-4">
-          <input
-            className="w-full rounded-lg border px-3 py-2"
-            type="email"
-            placeholder="you@domain.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={status === "loading" || status === "ok"}
-          />
+          {message && (
+            <div className={`p-3 rounded-lg text-sm ${
+              message.type === 'success' 
+                ? 'bg-green-50 text-green-800 border border-green-200' 
+                : 'bg-red-50 text-red-800 border border-red-200'
+            }`}>
+              {message.text}
+            </div>
+          )}
 
           <button
-            className="w-full rounded-lg border px-3 py-2 font-medium"
             type="submit"
-            disabled={status === "loading" || status === "ok"}
+            disabled={loading}
+            className="w-full py-2.5 px-4 bg-radar-primary text-white rounded-lg font-medium hover:bg-radar-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            {status === "loading"
-              ? "Sending sign-in link…"
-              : "Send sign-in link"}
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sending link...
+              </>
+            ) : (
+              'Send magic link'
+            )}
           </button>
         </form>
-
-        {message && (
-          <div className="mt-4 rounded-lg border p-3 text-sm">
-            {message}
-          </div>
-        )}
       </div>
-    </main>
-  );
+    </div>
+  )
 }
