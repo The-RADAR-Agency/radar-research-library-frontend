@@ -51,7 +51,9 @@ export default function TrendDetail({
   }, [isEditing])
 
   const handleClose = () => {
-    router.back()
+    const searchParams = new URLSearchParams(window.location.search);
+    const tab = searchParams.get('tab') || 'uploads';
+    router.push(`/library?tab=${tab}`);
   }
 
   const handleSave = async () => {

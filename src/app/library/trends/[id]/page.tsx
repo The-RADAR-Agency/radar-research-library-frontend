@@ -31,7 +31,8 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
     industries,
     sourceDoc,
     trendDrivers,
-    trendSignals
+    trendSignals,
+    trendEvidence
   ] = await Promise.all([
     supabase.from('trends_topics').select('topics(*)').eq('trend_id', id),
     supabase.from('trends_categories').select('categories(*)').eq('trend_id', id),
@@ -40,7 +41,8 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
     supabase.from('trends_hubspot_industries').select('hubspot_industries(*)').eq('trend_id', id),
     supabase.from('source_documents').select('*').eq('id', trend.extracted_from).single(),
     supabase.from('drivers_trends').select('drivers(*, steep_categories(*))').eq('trend_id', id),
-    supabase.from('signals_trends').select('signals(*, steep_categories(*))').eq('trend_id', id)
+    supabase.from('signals_trends').select('signals(*, steep_categories(*))').eq('trend_id', id),
+    supabase.from('trends_evidence').select('evidence(*, steep_categories(*))').eq('trend_id', id)
   ])
 
   // Extract from junction results
@@ -73,7 +75,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
       trend={fullTrend}
       relatedDrivers={drivers}
       relatedSignals={signals}
-      relatedEvidence={[]}
+      relatedEvidence={trendEvidence.data?.map(te => te.evidence).filter(Boolean) || []}
       userId={session.user.id}
     />
   )

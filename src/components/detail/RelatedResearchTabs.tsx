@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { getCardImageUrl, formatDate } from '@/lib/utils'
 import VerificationBadge from '@/components/VerificationBadge'
 import type { Driver, Trend, Signal } from '@/lib/types'
@@ -31,6 +32,7 @@ export default function RelatedResearchTabs({
     !hideEvidence && evidence.length > 0 && { id: 'evidence' as const, label: `Evidence (${evidence.length})`, count: evidence.length, data: evidence }
   ].filter(Boolean) as { id: string, label: string, count: number, data: any[] }[]
 
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState(allTabs[0]?.id || 'trends')
 
   const activeTabData = allTabs.find(tab => tab.id === activeTab)
@@ -69,7 +71,14 @@ export default function RelatedResearchTabs({
         <div className="overflow-x-auto hide-scrollbar">
           <div className="flex gap-4 pb-2">
             {activeContent.map((item: any) => (
-              <div key={item.id} className="w-48 flex-shrink-0">
+              <div 
+                key={item.id} 
+                onClick={() => {
+                  const type = activeTab === 'drivers' ? 'drivers' : activeTab === 'trends' ? 'trends' : activeTab === 'signals' ? 'signals' : 'evidence';
+                  router.push(`/library/${type}/${item.id}`);
+                }}
+                className="w-48 flex-shrink-0 cursor-pointer"
+              >
                 <div className="bg-white rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-card-hover h-56 flex flex-col">
                   <div 
                     className="h-24 bg-cover bg-center" 
@@ -77,7 +86,7 @@ export default function RelatedResearchTabs({
                   />
                   <div className="p-3 flex-1 flex flex-col">
                     <h3 className="font-headline font-semibold text-sm line-clamp-3 mb-auto">
-                      {item.driver_name || item.trend_name || item.signal_name || item.title}
+                      {item.driver_name || item.trend_name || item.signal_name || item.evidence_text || item.title}
                     </h3>
                     <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                       {item.steep_categories && item.steep_categories.length > 0 && (

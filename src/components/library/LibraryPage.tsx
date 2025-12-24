@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import { useState, useMemo } from 'react'
 import { Filter } from 'lucide-react'
@@ -24,7 +24,8 @@ interface LibraryPageProps {
 
 export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
     const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'uploads' | 'drivers' | 'trends' | 'signals'>('uploads')
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'uploads' | 'drivers' | 'trends' | 'signals'>((searchParams.get('tab') as any) || 'uploads')
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<LibraryFilters>({
     topics: [],
@@ -152,7 +153,10 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  router.push(`/library?tab=${tab.id}`, { scroll: false });
+                }}
                 className={`px-6 py-2.5 text-xs font-nav font-bold tracking-wide transition-all ${
                   activeTab === tab.id
                     ? 'bg-white border-2 border-gray-900 text-gray-900'
