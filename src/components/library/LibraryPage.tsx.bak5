@@ -31,7 +31,6 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
     industries: [],
     visibility: 'All'
   })
-  const [filterLogic, setFilterLogic] = useState<'OR' | 'AND'>('OR')
 
   const tabs = [
     { id: 'uploads' as const, label: 'UPLOADS' },
@@ -45,78 +44,31 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
     console.log('Filter options steep_categories:', initialData.filterOptions.steep_categories)
     
     let reports = filterReportsByVisibility(initialData.reports, userId, filters.visibility as any)
-
-    // Apply taxonomy filters to reports
-    if (filters.topics.length > 0) {
-      if (filterLogic === 'OR') {
-        reports = reports.filter(r => r.topics?.some((t: any) => filters.topics.includes(t.id)))
-      } else {
-        reports = reports.filter(r => filters.topics.every(topicId => r.topics?.some((t: any) => t.id === topicId)))
-      }
-    }
-
-    if (filters.categories.length > 0) {
-      if (filterLogic === 'OR') {
-        reports = reports.filter(r => r.categories?.some((c: any) => filters.categories.includes(c.id)))
-      } else {
-        reports = reports.filter(r => filters.categories.every(catId => r.categories?.some((c: any) => c.id === catId)))
-      }
-    }
-
-    if (filters.geographies.length > 0) {
-      if (filterLogic === 'OR') {
-        reports = reports.filter(r => r.geographical_focus?.some((g: any) => filters.geographies.includes(g.id)))
-      } else {
-        reports = reports.filter(r => filters.geographies.every(geoId => r.geographical_focus?.some((g: any) => g.id === geoId)))
-      }
-    }
     let drivers = filterByVisibility(initialData.drivers, userId, initialData.reports, filters.visibility as any)
     let trends = filterByVisibility(initialData.trends, userId, initialData.reports, filters.visibility as any)
     let signals = filterByVisibility(initialData.signals, userId, initialData.reports, filters.visibility as any)
 
     if (filters.topics.length > 0) {
-      if (filterLogic === 'OR') {
-        drivers = drivers.filter(d => d.topics?.some((t: any) => filters.topics.includes(t.id)))
-        trends = trends.filter(t => t.topics?.some((topic: any) => filters.topics.includes(topic.id)))
-        signals = signals.filter(s => s.topics?.some((t: any) => filters.topics.includes(t.id)))
-      } else {
-        drivers = drivers.filter(d => filters.topics.every(topicId => d.topics?.some((t: any) => t.id === topicId)))
-        trends = trends.filter(t => filters.topics.every(topicId => t.topics?.some((topic: any) => topic.id === topicId)))
-        signals = signals.filter(s => filters.topics.every(topicId => s.topics?.some((t: any) => t.id === topicId)))
-      }
+      drivers = drivers.filter(d => d.topics?.some((t: any) => filters.topics.includes(t.id)))
+      trends = trends.filter(t => t.topics?.some((topic: any) => filters.topics.includes(topic.id)))
+      signals = signals.filter(s => s.topics?.some((t: any) => filters.topics.includes(t.id)))
     }
 
     if (filters.categories.length > 0) {
-      if (filterLogic === 'OR') {
-        drivers = drivers.filter(d => d.categories?.some((c: any) => filters.categories.includes(c.id)))
-        trends = trends.filter(t => t.categories?.some((c: any) => filters.categories.includes(c.id)))
-      } else {
-        drivers = drivers.filter(d => filters.categories.every(catId => d.categories?.some((c: any) => c.id === catId)))
-        trends = trends.filter(t => filters.categories.every(catId => t.categories?.some((c: any) => c.id === catId)))
-      }
+      drivers = drivers.filter(d => d.categories?.some((c: any) => filters.categories.includes(c.id)))
+      trends = trends.filter(t => t.categories?.some((c: any) => filters.categories.includes(c.id)))
       signals = signals.filter(s => s.categories?.some((c: any) => filters.categories.includes(c.id)))
     }
 
     if (filters.steep.length > 0) {
-      if (filterLogic === 'OR') {
-        drivers = drivers.filter(d => d.steep_categories?.some((s: any) => filters.steep.includes(s.id)))
-        trends = trends.filter(t => t.steep_categories?.some((s: any) => filters.steep.includes(s.id)))
-        signals = signals.filter(s => s.steep_categories?.some((steep: any) => filters.steep.includes(steep.id)))
-      } else {
-        drivers = drivers.filter(d => filters.steep.every(steepId => d.steep_categories?.some((s: any) => s.id === steepId)))
-        trends = trends.filter(t => filters.steep.every(steepId => t.steep_categories?.some((s: any) => s.id === steepId)))
-        signals = signals.filter(s => filters.steep.every(steepId => s.steep_categories?.some((steep: any) => steep.id === steepId)))
-      }
+      drivers = drivers.filter(d => d.steep_categories?.some((s: any) => filters.steep.includes(s.id)))
+      trends = trends.filter(t => t.steep_categories?.some((s: any) => filters.steep.includes(s.id)))
+      signals = signals.filter(s => s.steep_categories?.some((steep: any) => filters.steep.includes(steep.id)))
     }
 
     if (filters.geographies.length > 0) {
-      if (filterLogic === 'OR') {
-        drivers = drivers.filter(d => d.geographical_focus?.some((g: any) => filters.geographies.includes(g.id)))
-        trends = trends.filter(t => t.geographical_focus?.some((g: any) => filters.geographies.includes(g.id)))
-      } else {
-        drivers = drivers.filter(d => filters.geographies.every(geoId => d.geographical_focus?.some((g: any) => g.id === geoId)))
-        trends = trends.filter(t => filters.geographies.every(geoId => t.geographical_focus?.some((g: any) => g.id === geoId)))
-      }
+      drivers = drivers.filter(d => d.geographical_focus?.some((g: any) => filters.geographies.includes(g.id)))
+      trends = trends.filter(t => t.geographical_focus?.some((g: any) => filters.geographies.includes(g.id)))
       signals = signals.filter(s => s.geographical_focus?.some((g: any) => filters.geographies.includes(g.id)))
     }
 
@@ -127,7 +79,7 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
     }
 
     return { reports, drivers, trends, signals }
-  }, [initialData, userId, filters, filterLogic])
+  }, [initialData, userId, filters])
 
   const activeCount = useMemo(() => {
     switch (activeTab) {
@@ -176,72 +128,39 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
         <div className="mb-8 p-6 bg-white rounded-xl border border-border">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold">Filters</h3>
-            <div className="flex items-center gap-3">
-              {/* Visibility dropdown */}
-              <div className="relative group">
-                <button className="p-1.5 hover:bg-muted rounded-lg transition-colors" title="Visibility">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-                <div className="absolute right-0 mt-1 w-40 bg-white border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                  {(['All', 'My Content', 'Shared with Me'] as const).map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => setFilters({ ...filters, visibility: option })}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                        filters.visibility === option ? 'bg-radar-primary/10 font-medium' : ''
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* AND/OR toggle */}
-              <div className="flex items-center gap-0.5 bg-muted rounded-full p-0.5">
-                <button
-                  onClick={() => setFilterLogic('OR')}
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all ${
-                    filterLogic === 'OR' ? 'bg-white shadow-sm' : 'text-muted-foreground'
-                  }`}
-                  title="Show items matching ANY selected filter"
-                >
-                  OR
-                </button>
-                <button
-                  onClick={() => setFilterLogic('AND')}
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all ${
-                    filterLogic === 'AND' ? 'bg-white shadow-sm' : 'text-muted-foreground'
-                  }`}
-                  title="Show items matching ALL selected filters"
-                >
-                  AND
-                </button>
-              </div>
-
-              {/* Clear all button */}
-              <button
-                onClick={() => setFilters({
-                  topics: [],
-                  categories: [],
-                  steep: [],
-                  geographies: [],
-                  industries: [],
-                  visibility: 'All'
-                })}
-                className="text-sm text-muted-foreground hover:text-foreground font-medium"
-              >
-                Clear all
-              </button>
-            </div>
+            <button
+              onClick={() => setFilters({
+                topics: [],
+                categories: [],
+                steep: [],
+                geographies: [],
+                industries: [],
+                visibility: 'All'
+              })}
+              className="text-sm text-radar-primary hover:text-radar-primary/80 font-medium"
+            >
+              Clear all
+            </button>
           </div>
 
           <div className="space-y-4">
             <div>
-                            
+              <label className="block text-sm font-medium mb-2">Visibility</label>
+              <div className="flex flex-wrap gap-2">
+                {(['All', 'My Content', 'Shared with Me'] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setFilters({ ...filters, visibility: option })}
+                    className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                      filters.visibility === option
+                        ? 'bg-radar-primary text-white border-radar-primary'
+                        : 'bg-white border-input hover:bg-muted'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {initialData.filterOptions.topics.length > 0 && (
@@ -265,7 +184,7 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
             {initialData.filterOptions.steep_categories && initialData.filterOptions.steep_categories.length > 0 && (
               <MultiSelectFilter
                 label="STEEP"
-                options={initialData.filterOptions.steep_categories.map((s: any) => ({ id: s.id, name: s.name }))}
+                options={initialData.filterOptions.steep_categories.map((s: any) => ({ id: s.id, name: s.steep_name }))}
                 selectedIds={filters.steep}
                 onChange={(ids) => setFilters({ ...filters, steep: ids })}
               />
@@ -397,14 +316,9 @@ function EntityCard({ entity, type }: { entity: Driver | Trend | Signal, type: '
           {entity.description}
         </p>
 
-        <div className="mt-auto flex items-end justify-between">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {observationDate && <span>{formatDate(observationDate)}</span>}
-            <VerificationBadge status={entity.verification_status} />
-          </div>
-          
+        <div className="mt-auto">
           {entity.steep_categories && entity.steep_categories.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 justify-end">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {entity.steep_categories.map((steep: any) => (
                 <span 
                   key={steep.id} 
@@ -413,6 +327,13 @@ function EntityCard({ entity, type }: { entity: Driver | Trend | Signal, type: '
                   {steep.name}
                 </span>
               ))}
+            </div>
+          )}
+
+          {observationDate && (
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{formatDate(observationDate)}</span>
+              <VerificationBadge status={entity.verification_status} />
             </div>
           )}
         </div>

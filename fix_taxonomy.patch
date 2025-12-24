@@ -1,0 +1,16 @@
+--- a/src/lib/data/library.ts
++++ b/src/lib/data/library.ts
+@@ -1,11 +1,11 @@
+   // Load all junction table data in parallel
+   const [topics, categories, steep, geo, industries] = await Promise.all([
+-    supabase.from`${entityType}_topics`).select('*, topics(*)').in`${entityType.slice(0, -1)}_id`, entityIds),
+-    supabase.from`${entityType}_categories`).select('*, categories(*)').in`${entityType.slice(0, -1)}_id`, entityIds),
+-    supabase.from`${entityType}_steep_categories`).select('*, steep_categories(*)').in`${entityType.slice(0, -1)}_id`, entityIds),
+-    supabase.from`${entityType}_geographical_focus`).select('*, geographical_focus(*)').in`${entityType.slice(0, -1)}_id`, entityIds),
+-    supabase.from`${entityType}_hubspot_industries`).select('*, hubspot_industries(*)').in`${entityType.slice(0, -1)}_id`, entityIds)
++    supabase.from(`${entityType}_topics`).select('*, topics(*)').in(`${entityType.slice(0, -1)}_id`, entityIds),
++    supabase.from(`${entityType}_categories`).select('*, categories(*)').in(`${entityType.slice(0, -1)}_id`, entityIds),
++    supabase.from(`${entityType}_steep_categories`).select('*, steep_categories(*)').in(`${entityType.slice(0, -1)}_id`, entityIds),
++    supabase.from(`${entityType}_geographical_focus`).select('*, geographical_focus(*)').in(`${entityType.slice(0, -1)}_id`, entityIds),
++    supabase.from(`${entityType}_hubspot_industries`).select('*, hubspot_industries(*)').in(`${entityType.slice(0, -1)}_id`, entityIds)
+   ])

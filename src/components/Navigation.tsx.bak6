@@ -34,7 +34,7 @@ export default function Navigation({ user }: NavigationProps) {
           <Link href="/" className="flex items-center">
             {!imageError ? (
               <Image
-                src="/brand-assets/logos/radar-logo.png"
+                src="/brand-assets/Radar Agency Design Assets/1.Logos/Radar Logo-01.png"
                 alt="RADAR"
                 width={120}
                 height={40}

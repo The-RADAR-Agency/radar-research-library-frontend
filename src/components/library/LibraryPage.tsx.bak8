@@ -127,7 +127,7 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
     }
 
     return { reports, drivers, trends, signals }
-  }, [initialData, userId, filters, filterLogic])
+  }, [initialData, userId, filters])
 
   const activeCount = useMemo(() => {
     switch (activeTab) {
