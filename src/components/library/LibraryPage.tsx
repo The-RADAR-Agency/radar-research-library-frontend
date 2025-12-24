@@ -300,13 +300,13 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
           <ReportCard key={report.id} report={report} router={router} />
         ))}
         {activeTab === 'drivers' && filteredData.drivers.map((driver) => (
-          <EntityCard key={driver.id} entity={driver} type="driver" />
+          <EntityCard key={driver.id} entity={driver} type="driver" router={router} />
         ))}
         {activeTab === 'trends' && filteredData.trends.map((trend) => (
-          <EntityCard key={trend.id} entity={trend} type="trend" />
+          <EntityCard key={trend.id} entity={trend} type="trend" router={router} />
         ))}
         {activeTab === 'signals' && filteredData.signals.map((signal) => (
-          <EntityCard key={signal.id} entity={signal} type="signal" />
+          <EntityCard key={signal.id} entity={signal} type="signal" router={router} />
         ))}
       </div>
 
@@ -382,12 +382,12 @@ function ReportCard({ report, router }: { report: SourceDocument, router: any })
   )
 }
 
-function EntityCard({ entity, type }: { entity: Driver | Trend | Signal, type: 'driver' | 'trend' | 'signal' }) {
+function EntityCard({ entity, type, router }: { entity: Driver | Trend | Signal, type: 'driver' | 'trend' | 'signal', router: any }) {
   const name = 'driver_name' in entity ? entity.driver_name : 'trend_name' in entity ? entity.trend_name : entity.signal_name
   const observationDate = 'observation_date' in entity ? entity.observation_date : null
 
   return (
-    <div className="bg-white rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-card-hover cursor-pointer flex flex-col h-full">
+    <div onClick={() => router.push(`/library/${type}s/${entity.id}`)} className="bg-white rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-card-hover cursor-pointer flex flex-col h-full">
       <div 
         className="h-32 bg-cover bg-center flex-shrink-0"
         style={{ backgroundImage: `url(${getCardImageUrl(entity)})` }}
