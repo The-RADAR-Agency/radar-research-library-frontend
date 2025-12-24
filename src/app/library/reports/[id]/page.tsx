@@ -1,0 +1,57 @@
+import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import UploadDetail from '@/components/detail/UploadDetail'
+
+export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const supabase = await createServerSupabaseClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  if (!session) {
+    return null
+  }
+
+  // Load the report with all related data
+  const { data: report, error } = await supabase
+    .from('source_documents')
+    .select(`
+      *,
+      topics(*),
+      categories(*),
+      geographical_focus(*),
+      source:sources(*),
+      source_documents_hubspot_industries(hubspot_industries(*))
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error || !report) {
+    notFound()
+  }
+
+  // Load related research extracted from this report
+  const [drivers, trends, signals] = await Promise.all([
+    supabase
+      .from('drivers')
+      .select('*, steep_categories(*)')
+      .eq('extracted_from', id),
+    supabase
+      .from('trends')
+      .select('*, steep_categories(*)')
+      .eq('extracted_from', id),
+    supabase
+      .from('signals')
+      .select('*, steep_categories(*)')
+      .eq('extracted_from', id)
+  ])
+
+  return (
+    <UploadDetail
+      report={report}
+      relatedDrivers={drivers.data || []}
+      relatedTrends={trends.data || []}
+      relatedSignals={signals.data || []}
+      userId={session.user.id}
+    />
+  )
+}
