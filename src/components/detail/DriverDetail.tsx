@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { X, Edit2, Check, XCircle, Bot } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { getCardImageUrl } from '@/lib/utils'
+import { getCardImageUrl, getImageStyle } from '@/lib/utils'
 import TaxonomyGrid from './TaxonomyGrid'
 import RelatedResearchTabs from './RelatedResearchTabs'
+import ImageUpload from '../ImageUpload'
 import type { Driver, Trend, Signal } from '@/lib/types'
 
 interface DriverDetailProps {
@@ -250,12 +251,20 @@ export default function DriverDetail({
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* Header Image */}
-            <div
-              className="w-full h-64 bg-cover bg-center rounded-lg"
-              style={{ backgroundImage: `url(${getCardImageUrl(driver)})` }}
-            />
-
-            {/* Title */}
+            {/* Header Image */}
+            <div className="relative">
+              <div
+                className="w-full h-64 rounded-lg"
+                style={getImageStyle(driver)}
+              />
+              <ImageUpload
+                currentImageUrl={getCardImageUrl(driver)}
+                entityType="driver"
+                entityId={driver.id}
+                currentCropPosition={driver.header_images?.crop_position}
+                isEditing={isEditing}
+              />
+            </div>
             {isEditing ? (
               <input
                 type="text"

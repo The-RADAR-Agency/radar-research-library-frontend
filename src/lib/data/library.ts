@@ -129,7 +129,7 @@ function groupBy(array: any[], key: string) {
 async function loadReports(supabase: any) {
   const { data, error } = await supabase
     .from('source_documents')
-    .select('*')
+    .select('*, header_images(*)')
     .order('created_at', { ascending: false })
   
   if (error) console.error('Error loading reports:', error)
@@ -141,6 +141,7 @@ async function loadDrivers(supabase: any) {
     .from('drivers')
     .select(`
       *,
+      header_images(*),
       last_edited_by_user:users!last_edited_by(id, full_name),
       verified_by_user:users!verified_by(id, full_name)
     `)
@@ -155,6 +156,7 @@ async function loadTrends(supabase: any) {
     .from('trends')
     .select(`
       *,
+      header_images(*),
       last_edited_by_user:users!last_edited_by(id, full_name),
       verified_by_user:users!verified_by(id, full_name)
     `)
@@ -169,6 +171,7 @@ async function loadSignals(supabase: any) {
     .from('signals')
     .select(`
       *,
+      header_images(*),
       last_edited_by_user:users!last_edited_by(id, full_name),
       verified_by_user:users!verified_by(id, full_name)
     `)
@@ -183,6 +186,7 @@ async function loadEvidence(supabase: any) {
     .from('evidence')
     .select(`
       *,
+      header_images(*),
       last_edited_by_user:users!last_edited_by(id, full_name),
       verified_by_user:users!verified_by(id, full_name)
     `)

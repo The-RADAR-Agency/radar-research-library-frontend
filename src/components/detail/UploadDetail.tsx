@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { X, Download, Edit2, Check, XCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { getCardImageUrl, formatDate } from '@/lib/utils'
+import { getCardImageUrl, getImageStyle, formatDate } from '@/lib/utils'
 import VerificationBadge from '@/components/VerificationBadge'
 import TaxonomyGrid from './TaxonomyGrid'
+import ImageUpload from '../ImageUpload'
 import KeyThemes from './KeyThemes'
 import RelatedResearchTabs from './RelatedResearchTabs'
 import type { SourceDocument, Driver, Trend, Signal } from '@/lib/types'
@@ -153,11 +154,19 @@ export default function UploadDetail({
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* Header Image */}
-            <div
-              className="w-full h-64 bg-cover bg-center rounded-lg"
-              style={{ backgroundImage: `url(${getCardImageUrl(report)})` }}
-            />
-
+            <div className="relative">
+              <div
+                className="w-full h-64 rounded-lg"
+                style={getImageStyle(report)}
+              />
+              <ImageUpload
+                currentImageUrl={getCardImageUrl(report)}
+                entityType="upload"
+                entityId={report.id}
+                currentCropPosition={report.header_images?.crop_position}
+                isEditing={isEditing}
+              />
+            </div>
             {/* Title */}
             {isEditing ? (
               <input

@@ -36,25 +36,21 @@ const ALL_BACKGROUNDS = Array.from({ length: 20 }, (_, i) => {
   return `/brand-assets/backgrounds/${num}.${ext}`
 })
 
-// Legacy function for backward compatibility
-function getRandomBackgroundImage(id: string): string {
-  const index = hashString(id) % ALL_BACKGROUNDS.length
-  return ALL_BACKGROUNDS[index]
-}
-
 export function getCardImageUrl(entity: { 
   id: string
   card_image_url?: string | null
   file_url?: string | null
   document_type?: string
   header_image_id?: string | null
+  header_images?: {
+    image_url: string
+    thumbnail_url?: string | null
+    crop_position?: { x: number; y: number; zoom: number } | null
+  } | null
 }): string {
-  // Priority 1: Check for header_image_id (for drivers, trends, signals)
-  if (entity.header_image_id) {
-    // TODO: Implement actual image lookup from header_image_id
-    // For now, use random background based on entity ID
-    const index = hashString(entity.id) % ALL_BACKGROUNDS.length
-    return ALL_BACKGROUNDS[index]
+  // Priority 1: Check for header_images (joined data from header_image_id)
+  if (entity.header_images?.image_url) {
+    return entity.header_images.image_url
   }
 
   // Priority 2: For trend reports, try to use the PDF thumbnail
@@ -72,6 +68,22 @@ export function getCardImageUrl(entity: {
   // Priority 4: Fall back to random background based on entity ID
   const index = hashString(entity.id) % ALL_BACKGROUNDS.length
   return ALL_BACKGROUNDS[index]
+}
+
+export function getImageStyle(entity: { 
+  header_images?: {
+    image_url: string
+    crop_position?: { x: number; y: number; zoom: number } | null
+  } | null
+}): React.CSSProperties {
+  const cropPosition = entity.header_images?.crop_position || { x: 50, y: 50, zoom: 100 }
+  
+  return {
+    backgroundImage: `url(${getCardImageUrl(entity)})`,
+    backgroundPosition: `${cropPosition.x}% ${cropPosition.y}%`,
+    backgroundSize: cropPosition.zoom === 100 ? 'cover' : `${cropPosition.zoom}%`,
+    backgroundRepeat: 'no-repeat'
+  }
 }
 
 export function formatDocumentType(type: string): string {

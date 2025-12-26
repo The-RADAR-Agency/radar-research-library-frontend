@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCardImageUrl } from '@/lib/utils'
+import { getCardImageUrl, getImageStyle } from '@/lib/utils'
 import VerificationBadge from '@/components/VerificationBadge'
 
 interface RelatedResearchTabsProps {
@@ -84,8 +84,8 @@ export default function RelatedResearchTabs({
               >
                 <div className="bg-white rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-card-hover h-56 flex flex-col">
                   <div 
-                    className="h-24 bg-cover bg-center" 
-                    style={{ backgroundImage: `url(${getCardImageUrl(item)})` }}
+                    className="h-[58px] bg-cover bg-center" 
+                    style={getImageStyle(item)}
                   />
                   <div className="p-3 flex-1 flex flex-col">
                     <h3 className="font-headline font-semibold text-sm line-clamp-3 mb-auto">

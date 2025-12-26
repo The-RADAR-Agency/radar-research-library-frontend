@@ -7,7 +7,7 @@ import { Filter } from 'lucide-react'
 import type { SourceDocument, Driver, Trend, Signal, Evidence, LibraryFilters } from '@/lib/types'
 import { filterByVisibility, filterReportsByVisibility } from '@/lib/data/visibility'
 import VerificationBadge from '@/components/VerificationBadge'
-import { getCardImageUrl, truncateText, formatDate, formatDocumentType } from '@/lib/utils'
+import { getCardImageUrl, getImageStyle, truncateText, formatDate, formatDocumentType } from '@/lib/utils'
 import MultiSelectFilter from './MultiSelectFilter'
 
 interface LibraryPageProps {
@@ -344,8 +344,8 @@ function ReportCard({ report, router }: { report: SourceDocument, router: any })
   return (
     <div onClick={() => router.push(`/library/reports/${report.id}`)} className="bg-white rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-card-hover cursor-pointer flex flex-col h-full">
       <div 
-        className="h-32 bg-cover bg-center relative flex-shrink-0"
-        style={{ backgroundImage: `url(${getCardImageUrl(report)})` }}
+        className="h-[119px] bg-cover bg-center relative flex-shrink-0"
+        style={getImageStyle(report)}
       >
         {showProcessing && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
@@ -393,8 +393,8 @@ function EntityCard({ entity, type, router }: { entity: Driver | Trend | Signal,
   return (
     <div onClick={() => router.push(`/library/${type}s/${entity.id}`)} className="bg-white rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-card-hover cursor-pointer flex flex-col h-full">
       <div 
-        className="h-32 bg-cover bg-center flex-shrink-0"
-        style={{ backgroundImage: `url(${getCardImageUrl(entity)})` }}
+        className="h-[119px] bg-cover bg-center flex-shrink-0"
+        style={getImageStyle(entity)}
       />
       
       <div className="p-5 flex flex-col flex-1">

@@ -16,6 +16,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
     .from('source_documents')
     .select(`
       *,
+      header_images(*),
       topics(*),
       categories(*),
       geographical_focus(*),

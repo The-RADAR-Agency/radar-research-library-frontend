@@ -16,6 +16,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
     .from('trends')
     .select(`
       *,
+      header_images(*),
       last_edited_by_user:users!last_edited_by(id, full_name, auth_user_id),
       verified_by_user:users!verified_by(id, full_name, auth_user_id)
     `)

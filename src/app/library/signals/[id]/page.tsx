@@ -16,6 +16,7 @@ export default async function SignalDetailPage({ params }: { params: Promise<{ i
     .from('signals')
     .select(`
       *,
+      header_images(*),
       last_edited_by_user:users!last_edited_by(id, full_name),
       verified_by_user:users!verified_by(id, full_name)
     `)
