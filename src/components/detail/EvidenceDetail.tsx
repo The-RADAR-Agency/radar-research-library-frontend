@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Edit2, Check, XCircle, Bot } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { getCardImageUrl } from '@/lib/utils'
+import { getCardImageUrl, truncateText } from '@/lib/utils'
 import TaxonomyGrid from './TaxonomyGrid'
 import RelatedResearchTabs from './RelatedResearchTabs'
 
@@ -176,30 +176,59 @@ export default function EvidenceDetail({
             </div>
           </div>
           <div className="p-6 space-y-6">
-            {evidence.source_documents && (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"><Bot className="w-4 h-4" /><span>Extracted from:</span></div>
-                <button onClick={() => router.push(`/library/reports/${evidence.extracted_from}`)} className="font-medium text-radar-primary hover:underline text-left break-words max-w-3xl">{evidence.source_documents.title}</button>
-              </div>
-            )}
-            {evidence.observation_date && (
-              <div className="text-sm text-muted-foreground">Observed: {new Date(evidence.observation_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            )}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
+            {/* Extracted From & Observed Date - Responsive */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              {evidence.source_documents && (
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Bot className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <span>Extracted from </span>
+                    <button 
+                      onClick={() => router.push(`/library/reports/${evidence.extracted_from}`)} 
+                      className="font-medium text-radar-primary hover:underline"
+                      title={evidence.source_documents.title}
+                    >
+                      {truncateText(evidence.source_documents.title, 60)}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {evidence.observation_date && (
+                <div className="text-sm text-muted-foreground md:text-right">
+                  Observed: {new Date(evidence.observation_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </div>
+              )}
+            </div>
+            {/* Evidence Text & Quantitative Value - Responsive Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2">
                 {isEditing ? (
                   <textarea value={editedEvidence.evidence_text || ''} onChange={(e) => setEditedEvidence({ ...editedEvidence, evidence_text: e.target.value })} placeholder="Evidence text..." rows={6} className="w-full px-4 py-3 border border-border rounded-lg focus:border-radar-primary outline-none resize-none text-lg" />
                 ) : (
                   <div className="p-4 border-l-4 border-radar-primary bg-muted/30 rounded-lg"><p className="text-lg italic leading-relaxed">"{evidence.evidence_text}"</p></div>
                 )}
               </div>
-              <div className="col-span-1">
+              <div className="lg:col-span-1">
                 {isEditing ? (
                   <input type="text" value={editedEvidence.quantitative_value || ''} onChange={(e) => setEditedEvidence({ ...editedEvidence, quantitative_value: e.target.value })} placeholder="e.g. 70%" className="w-full h-full px-3 py-2 border border-border rounded-lg focus:border-radar-primary outline-none" />
                 ) : (
-                  <div className="h-full rounded-lg flex items-center justify-center bg-cover bg-center relative" style={{ backgroundImage: `url(${getCardImageUrl(evidence)})` }}>
+                  <div className="h-full min-h-[150px] rounded-lg flex items-center justify-center bg-cover bg-center relative" style={{ backgroundImage: `url(${getCardImageUrl(evidence)})` }}>
                     {evidence.quantitative_value && (
-                      <div className="px-6 py-4 font-headline font-bold text-foreground relative z-10 text-center break-words max-w-full" style={{ fontSize: evidence.quantitative_value?.length > 30 ? '1.5rem' : evidence.quantitative_value?.length > 20 ? '2rem' : evidence.quantitative_value?.length > 10 ? '2.5rem' : '3rem' }}>{evidence.quantitative_value}</div>
+                      <div 
+                        className="px-4 py-4 font-bold text-foreground relative z-10 text-center break-words w-full" 
+                        style={{ 
+                          fontFamily: "'PP Mondwest', serif",
+                          fontSize: (() => {
+                            const length = evidence.quantitative_value.length;
+                            if (length <= 5) return 'clamp(3rem, 12vw, 5rem)';  // Big for short values like "70%"
+                            if (length <= 10) return 'clamp(2.5rem, 10vw, 4rem)';
+                            if (length <= 20) return 'clamp(2rem, 8vw, 3rem)';
+                            return 'clamp(1.5rem, 6vw, 2.5rem)'; // Smaller for long values
+                          })()
+                        }}
+                      >
+                        {evidence.quantitative_value}
+                      </div>
                     )}
                   </div>
                 )}
@@ -215,59 +244,59 @@ export default function EvidenceDetail({
                 )}
               </div>
             )}
+            {/* Evidence Type & Credibility Rating - Inline Layout */}
             <div className="grid grid-cols-2 gap-6">
-              <div>
-                <div className="text-sm mb-2"><span className="text-muted-foreground">Evidence Type:</span></div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Evidence Type:</span>
                 {isEditing ? (
-                  <input type="text" value={editedEvidence.evidence_type || ''} onChange={(e) => setEditedEvidence({ ...editedEvidence, evidence_type: e.target.value })} placeholder="e.g., Survey Result, Case Study..." className="w-full px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm" />
+                  <input type="text" value={editedEvidence.evidence_type || ''} onChange={(e) => setEditedEvidence({ ...editedEvidence, evidence_type: e.target.value })} placeholder="e.g., Survey Result, Case Study..." className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm" />
                 ) : (
-                  <div className="bg-muted/50 px-3 py-2 rounded-lg text-sm font-medium">{evidence.evidence_type}</div>
+                  <span className="px-3 py-1 bg-white border border-border rounded-full text-sm font-medium">{evidence.evidence_type}</span>
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <div className="text-sm mb-2"><span className="text-muted-foreground">Credibility Rating:</span></div>
-                    {isEditing ? (
-                      <div className="flex gap-2">
-                        {[1,2,3,4,5].map(rating => (
-                          <button key={rating} onClick={() => setEditedEvidence({ ...editedEvidence, credibility_rating: rating.toString() })} className={`px-3 py-1.5 border rounded-lg text-sm transition-colors ${editedEvidence.credibility_rating === rating.toString() ? 'bg-radar-primary text-white border-radar-primary' : 'border-border hover:bg-muted'}`}>{'⭐'.repeat(rating)}</button>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Credibility Rating:</span>
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    {[1,2,3,4,5].map(rating => (
+                      <button key={rating} onClick={() => setEditedEvidence({ ...editedEvidence, credibility_rating: rating.toString() })} className={`px-3 py-1.5 border rounded-lg text-sm transition-colors ${editedEvidence.credibility_rating === rating.toString() ? 'bg-radar-primary text-white border-radar-primary' : 'border-border hover:bg-muted'}`}>{rating}</button>
+                    ))}
+                  </div>
+                ) : (
+                  evidence.credibility_rating && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(parseInt(evidence.credibility_rating || '0'))].map((_, i) => (
+                          <svg key={i} className="w-4 h-4 text-[#FF6B35]" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
                         ))}
                       </div>
-                    ) : (
-                      evidence.credibility_rating && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {'⭐'.repeat(parseInt(evidence.credibility_rating || '0'))}
-                          </span>
-                          {evidence.credibility_description && (
-                            <div className="relative group">
-                              <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                              </svg>
-                              <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
-                                {evidence.credibility_description}
-                                <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
-                              </div>
-                            </div>
-                          )}
+                      {evidence.credibility_description && (
+                        <div className="relative group">
+                          <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                          </svg>
+                          <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                            {evidence.credibility_description}
+                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                          </div>
                         </div>
-                      )
-                    )}
-                  </div>
-                </div>
+                      )}
+                    </div>
+                  )
+                )}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm text-muted-foreground">Methodology:</span>
-                  {isEditing ? (
-                    <textarea value={editedEvidence.methodology || ''} onChange={(e) => setEditedEvidence({ ...editedEvidence, methodology: e.target.value })} placeholder="Describe the methodology..." rows={3} className="w-full mt-2 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none" />
-                  ) : (
-                    evidence.methodology && <span className="text-foreground ml-2">{evidence.methodology}</span>
-                  )}
-                </div>
+            {/* Methodology - Full Width */}
+            <div>
+              <div className="flex items-baseline gap-2 text-sm">
+                <span className="text-muted-foreground">Methodology:</span>
+                {isEditing ? (
+                  <textarea value={editedEvidence.methodology || ''} onChange={(e) => setEditedEvidence({ ...editedEvidence, methodology: e.target.value })} placeholder="Describe the methodology..." rows={3} className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none" />
+                ) : (
+                  evidence.methodology && <span className="text-foreground flex-1">{evidence.methodology}</span>
+                )}
               </div>
             </div>
             <div>
