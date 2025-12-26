@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Edit2, Check, XCircle, Bot } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { getCardImageUrl, getImageStyle } from '@/lib/utils'
+import { getCardImageUrl, getImageStyle, truncateText } from '@/lib/utils'
 import TaxonomyGrid from './TaxonomyGrid'
 import RelatedResearchTabs from './RelatedResearchTabs'
 import ImageUpload from '../ImageUpload'
@@ -251,20 +251,19 @@ export default function DriverDetail({
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* Header Image */}
-            {/* Header Image */}
             <div className="relative">
               <div
-                className="w-full h-64 rounded-lg"
-                style={getImageStyle(driver)}
+                className="w-full h-64 bg-cover bg-center rounded-lg"
+                style={{ backgroundImage: `url(${getCardImageUrl(driver)})` }}
               />
               <ImageUpload
                 currentImageUrl={getCardImageUrl(driver)}
                 entityType="driver"
                 entityId={driver.id}
-                currentCropPosition={driver.header_images?.crop_position}
                 isEditing={isEditing}
               />
             </div>
+            {/* Title */}
             {isEditing ? (
               <input
                 type="text"
@@ -302,8 +301,9 @@ export default function DriverDetail({
                     <button 
                       onClick={() => router.push(`/library/reports/${driver.extracted_from}`)}
                       className="font-medium text-radar-primary hover:underline"
+                      title={driver.source_documents.title}
                     >
-                      {driver.source_documents.title}
+                      {truncateText(driver.source_documents.title, 60)}
                     </button>
                     {driver.source_documents.upload_date && (
                       <span> on {new Date(driver.source_documents.upload_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>

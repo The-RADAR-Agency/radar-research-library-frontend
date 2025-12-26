@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Edit2, Check, XCircle, Bot } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { getCardImageUrl, getImageStyle } from '@/lib/utils'
+import { getCardImageUrl, getImageStyle, truncateText } from '@/lib/utils'
 import TaxonomyGrid from './TaxonomyGrid'
 import RelatedResearchTabs from './RelatedResearchTabs'
 import ImageUpload from '../ImageUpload'
@@ -255,20 +255,19 @@ export default function SignalDetail({
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* Header Image */}
-            {/* Header Image */}
             <div className="relative">
               <div
-                className="w-full h-64 rounded-lg"
-                style={getImageStyle(signal)}
+                className="w-full h-64 bg-cover bg-center rounded-lg"
+                style={{ backgroundImage: `url(${getCardImageUrl(signal)})` }}
               />
               <ImageUpload
                 currentImageUrl={getCardImageUrl(signal)}
                 entityType="signal"
                 entityId={signal.id}
-                currentCropPosition={signal.header_images?.crop_position}
                 isEditing={isEditing}
               />
             </div>
+            {/* Title */}
             {isEditing ? (
               <input
                 type="text"
@@ -306,8 +305,9 @@ export default function SignalDetail({
                     <button 
                       onClick={() => router.push(`/library/reports/${signal.extracted_from}`)}
                       className="font-medium text-radar-primary hover:underline"
+                      title={signal.source_documents.title}
                     >
-                      {signal.source_documents.title}
+                      {truncateText(signal.source_documents.title, 60)}
                     </button>
                     {signal.source_documents.upload_date && (
                       <span> on {new Date(signal.source_documents.upload_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
@@ -363,7 +363,7 @@ export default function SignalDetail({
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{signal.strength?.replace(/\b\w/g, l => l.toUpperCase()) || '—'}</span>
+                        <span className="font-medium">{signal.strength?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '—'}</span>
                         {signal.strength_description && (
                           <div className="relative group">
                             <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">

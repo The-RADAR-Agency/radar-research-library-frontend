@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Edit2, Check, XCircle, Bot } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { getCardImageUrl, getImageStyle } from '@/lib/utils'
+import { getCardImageUrl, getImageStyle, truncateText } from '@/lib/utils'
 import TaxonomyGrid from './TaxonomyGrid'
 import RelatedResearchTabs from './RelatedResearchTabs'
 import ImageUpload from '../ImageUpload'
@@ -261,20 +261,19 @@ const handleClose = () => {
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* Header Image */}
-            {/* Header Image */}
             <div className="relative">
               <div
-                className="w-full h-64 rounded-lg"
-                style={getImageStyle(trend)}
+                className="w-full h-64 bg-cover bg-center rounded-lg"
+                style={{ backgroundImage: `url(${getCardImageUrl(trend)})` }}
               />
               <ImageUpload
                 currentImageUrl={getCardImageUrl(trend)}
                 entityType="trend"
                 entityId={trend.id}
-                currentCropPosition={trend.header_images?.crop_position}
                 isEditing={isEditing}
               />
             </div>
+            {/* Title */}
             {isEditing ? (
               <input
                 type="text"
@@ -312,8 +311,9 @@ const handleClose = () => {
                     <button 
                       onClick={() => router.push(`/library/reports/${trend.extracted_from}`)}
                       className="font-medium text-radar-primary hover:underline"
+                      title={trend.source_documents.title}
                     >
-                      {trend.source_documents.title}
+                      {truncateText(trend.source_documents.title, 60)}
                     </button>
                     {trend.source_documents.upload_date && (
                       <span> on {new Date(trend.source_documents.upload_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>

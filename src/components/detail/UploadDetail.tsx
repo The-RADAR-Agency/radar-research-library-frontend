@@ -267,18 +267,6 @@ export default function UploadDetail({
               />
             </div>
 
-            {/* PDF Preview */}
-            {report.file_url && (
-              <div className="pt-6 border-t border-border">
-                <h2 className="text-xl font-semibold mb-4">PDF Preview</h2>
-                <div className="bg-muted rounded-lg p-4 text-center">
-                  <p className="text-muted-foreground mb-4">PDF preview coming soon</p>
-                  <button className="px-4 py-2 bg-radar-primary text-white rounded-lg hover:bg-radar-primary/90 transition-colors">
-                    Download Full PDF
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
