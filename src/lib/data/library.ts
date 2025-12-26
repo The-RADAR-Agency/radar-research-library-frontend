@@ -31,6 +31,10 @@ export async function loadLibraryData(userId: string) {
 export async function loadLibraryDataServer(userId: string) {
   const supabase = await createServerSupabaseClient()
 
+  // DEBUG: Check auth status
+  const { data: { user } } = await supabase.auth.getUser()
+  console.log('Loading library for user:', { userId, authUser: user?.id, email: user?.email })
+
   try {
     const [reports, drivers, trends, signals, evidence, filterOptions] = await Promise.all([
       loadReports(supabase),
