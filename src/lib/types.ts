@@ -14,6 +14,7 @@ export interface SourceDocument {
   publication_date: string | null
   publisher: string | null
   document_type: string
+  upload_date: string | null
   uploaded_by: string
   uploaded_at: string
   processing_status: 'uploaded' | 'processing' | 'completed' | 'failed'
@@ -33,6 +34,7 @@ export interface Driver {
   driver_name: string
   description: string
   extracted_from: string
+  observation_date: string | null
   verification_status: string
   verified_by: string | null
   verification_date: string | null
@@ -42,9 +44,17 @@ export interface Driver {
   card_image_url: string | null
   created_at: string
   updated_at: string
+  source_documents?: SourceDocument
   extracted_from_report?: SourceDocument
   verified_by_user?: User
   last_edited_by_user?: User
+  // Junction table fields
+  drivers_topics?: any[]
+  drivers_categories?: any[]
+  drivers_steep_categories?: any[]
+  drivers_geographical_focus?: any[]
+  drivers_hubspot_industries?: any[]
+  // Flattened taxonomy
   topics?: Topic[]
   categories?: Category[]
   steep_categories?: SteepCategory[]
@@ -57,10 +67,15 @@ export interface Trend {
   trend_name: string
   description: string
   extracted_from: string
+  observation_date: string | null
   trend_type: string | null
   time_horizon: string | null
   impact_potential: string | null
   likelihood: string | null
+  trend_type_description: string | null
+  time_horizon_description: string | null
+  impact_description: string | null
+  likelihood_description: string | null
   verification_status: string
   verified_by: string | null
   verification_date: string | null
@@ -70,9 +85,17 @@ export interface Trend {
   card_image_url: string | null
   created_at: string
   updated_at: string
+  source_documents?: SourceDocument
   extracted_from_report?: SourceDocument
   verified_by_user?: User
   last_edited_by_user?: User
+  // Junction table fields
+  trends_topics?: any[]
+  trends_categories?: any[]
+  trends_steep_categories?: any[]
+  trends_geographical_focus?: any[]
+  trends_hubspot_industries?: any[]
+  // Flattened taxonomy
   topics?: Topic[]
   categories?: Category[]
   steep_categories?: SteepCategory[]
@@ -85,9 +108,11 @@ export interface Signal {
   signal_name: string
   description: string
   extracted_from: string
-  strength: string | null
   observation_date: string | null
+  strength: string | null
+  strength_description: string | null
   potential_impact: string | null
+  impact_description: string | null
   verification_status: string
   verified_by: string | null
   verification_date: string | null
@@ -97,9 +122,17 @@ export interface Signal {
   card_image_url: string | null
   created_at: string
   updated_at: string
+  source_documents?: SourceDocument
   extracted_from_report?: SourceDocument
   verified_by_user?: User
   last_edited_by_user?: User
+  // Junction table fields
+  signals_topics?: any[]
+  signals_categories?: any[]
+  signals_steep_categories?: any[]
+  signals_geographical_focus?: any[]
+  signals_hubspot_industries?: any[]
+  // Flattened taxonomy
   topics?: Topic[]
   categories?: Category[]
   steep_categories?: SteepCategory[]
@@ -109,8 +142,12 @@ export interface Signal {
 
 export interface Evidence {
   id: string
+  evidence_name: string
   evidence_text: string
+  description: string
   evidence_type: any
+  source: string | null
+  date_observed: string | null
   extracted_from: string
   verification_status: string
   verified_by: string | null
@@ -121,9 +158,17 @@ export interface Evidence {
   card_image_url: string | null
   created_at: string
   updated_at: string
+  source_documents?: SourceDocument
   extracted_from_report?: SourceDocument
   verified_by_user?: User
   last_edited_by_user?: User
+  // Junction table fields
+  evidence_topics?: any[]
+  evidence_categories?: any[]
+  evidence_steep_categories?: any[]
+  evidence_geographical_focus?: any[]
+  evidence_hubspot_industries?: any[]
+  // Flattened taxonomy
   topics?: Topic[]
   categories?: Category[]
   steep_categories?: SteepCategory[]
@@ -145,7 +190,8 @@ export interface Category {
 
 export interface SteepCategory {
   id: string
-  steep_name: string
+  name: string
+  steep_name?: string
   steep_code?: string
   color_code: string
   description?: string

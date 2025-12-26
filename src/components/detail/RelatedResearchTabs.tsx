@@ -2,16 +2,17 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCardImageUrl, formatDate } from '@/lib/utils'
+import { getCardImageUrl } from '@/lib/utils'
 import VerificationBadge from '@/components/VerificationBadge'
-import type { Driver, Trend, Signal } from '@/lib/types'
 
 interface RelatedResearchTabsProps {
-  drivers?: Driver[]
-  trends?: Trend[]
-  signals?: Signal[]
-  evidence?: any[]
+  drivers: any[]
+  trends: any[]
+  signals: any[]
+  evidence: any[]
   hideDrivers?: boolean
+  hideTrends?: boolean
+  hideSignals?: boolean
   hideEvidence?: boolean
 }
 
@@ -21,14 +22,16 @@ export default function RelatedResearchTabs({
   signals = [],
   evidence = [],
   hideDrivers = false,
+  hideTrends = false,
+  hideSignals = false,
   hideEvidence = false
 }: RelatedResearchTabsProps) {
   
-  // Build tabs array
+  // Build tabs array - only include non-hidden tabs with data
   const allTabs = [
     !hideDrivers && drivers.length > 0 && { id: 'drivers' as const, label: `Drivers (${drivers.length})`, count: drivers.length, data: drivers },
-    trends.length > 0 && { id: 'trends' as const, label: `Trends (${trends.length})`, count: trends.length, data: trends },
-    signals.length > 0 && { id: 'signals' as const, label: `Signals (${signals.length})`, count: signals.length, data: signals },
+    !hideTrends && trends.length > 0 && { id: 'trends' as const, label: `Trends (${trends.length})`, count: trends.length, data: trends },
+    !hideSignals && signals.length > 0 && { id: 'signals' as const, label: `Signals (${signals.length})`, count: signals.length, data: signals },
     !hideEvidence && evidence.length > 0 && { id: 'evidence' as const, label: `Evidence (${evidence.length})`, count: evidence.length, data: evidence }
   ].filter(Boolean) as { id: string, label: string, count: number, data: any[] }[]
 
@@ -94,7 +97,7 @@ export default function RelatedResearchTabs({
                           {item.steep_categories[0].name}
                         </span>
                       )}
-                      <VerificationBadge status={item.verification_status} size="sm" />
+                      <VerificationBadge entity={item} />
                     </div>
                   </div>
                 </div>

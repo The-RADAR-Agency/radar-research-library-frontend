@@ -407,7 +407,7 @@ function EntityCard({ entity, type, router }: { entity: Driver | Trend | Signal,
         <div className="mt-auto flex items-end justify-between">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {observationDate && <span>{formatDate(observationDate)}</span>}
-            <VerificationBadge status={entity.verification_status} />
+            <VerificationBadge entity={entity} />
           </div>
           
           {entity.steep_categories && entity.steep_categories.length > 0 && (

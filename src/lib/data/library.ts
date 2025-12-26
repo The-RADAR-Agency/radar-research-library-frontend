@@ -135,7 +135,11 @@ async function loadReports(supabase: any) {
 async function loadDrivers(supabase: any) {
   const { data, error } = await supabase
     .from('drivers')
-    .select('*')
+    .select(`
+      *,
+      last_edited_by_user:users!last_edited_by(id, full_name),
+      verified_by_user:users!verified_by(id, full_name)
+    `)
     .order('created_at', { ascending: false })
   
   if (error) console.error('Error loading drivers:', error)
@@ -145,7 +149,11 @@ async function loadDrivers(supabase: any) {
 async function loadTrends(supabase: any) {
   const { data, error } = await supabase
     .from('trends')
-    .select('*')
+    .select(`
+      *,
+      last_edited_by_user:users!last_edited_by(id, full_name),
+      verified_by_user:users!verified_by(id, full_name)
+    `)
     .order('created_at', { ascending: false })
   
   if (error) console.error('Error loading trends:', error)
@@ -155,7 +163,11 @@ async function loadTrends(supabase: any) {
 async function loadSignals(supabase: any) {
   const { data, error } = await supabase
     .from('signals')
-    .select('*')
+    .select(`
+      *,
+      last_edited_by_user:users!last_edited_by(id, full_name),
+      verified_by_user:users!verified_by(id, full_name)
+    `)
     .order('created_at', { ascending: false })
   
   if (error) console.error('Error loading signals:', error)
@@ -165,7 +177,11 @@ async function loadSignals(supabase: any) {
 async function loadEvidence(supabase: any) {
   const { data, error } = await supabase
     .from('evidence')
-    .select('*')
+    .select(`
+      *,
+      last_edited_by_user:users!last_edited_by(id, full_name),
+      verified_by_user:users!verified_by(id, full_name)
+    `)
     .order('created_at', { ascending: false })
   
   if (error) console.error('Error loading evidence:', error)

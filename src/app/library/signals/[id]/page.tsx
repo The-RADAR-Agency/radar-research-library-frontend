@@ -14,7 +14,11 @@ export default async function SignalDetailPage({ params }: { params: Promise<{ i
   // Load the signal
   const { data: signal, error } = await supabase
     .from('signals')
-    .select('*')
+    .select(`
+      *,
+      last_edited_by_user:users!last_edited_by(id, full_name),
+      verified_by_user:users!verified_by(id, full_name)
+    `)
     .eq('id', id)
     .single()
 
@@ -39,7 +43,10 @@ export default async function SignalDetailPage({ params }: { params: Promise<{ i
     supabase.from('signals_steep_categories').select('steep_categories(*)').eq('signal_id', id),
     supabase.from('signals_geographical_focus').select('geographical_focus(*)').eq('signal_id', id),
     supabase.from('signals_hubspot_industries').select('hubspot_industries(*)').eq('signal_id', id),
-    supabase.from('source_documents').select('*').eq('id', signal.extracted_from).single(),
+    supabase.from('source_documents').select(`
+      *,
+      uploaded_by_user:users!uploaded_by(id, full_name)
+    `).eq('id', signal.extracted_from).single(),
     supabase.from('drivers_signals').select('drivers(*, steep_categories(*))').eq('signal_id', id),
     supabase.from('signals_trends').select('trends(*, steep_categories(*))').eq('signal_id', id),
     supabase.from('signals_evidence').select('evidence(*, steep_categories(*))').eq('signal_id', id)

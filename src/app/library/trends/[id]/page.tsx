@@ -14,7 +14,11 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
   // Load the trend
   const { data: trend, error } = await supabase
     .from('trends')
-    .select('*')
+    .select(`
+      *,
+      last_edited_by_user:users!last_edited_by(id, full_name, auth_user_id),
+      verified_by_user:users!verified_by(id, full_name, auth_user_id)
+    `)
     .eq('id', id)
     .single()
 

@@ -19,13 +19,15 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
       topics(*),
       categories(*),
       geographical_focus(*),
-      source:sources(*),
-      source_documents_hubspot_industries(hubspot_industries(*))
+      source:sources!source_id(*),
+      source_documents_hubspot_industries(hubspot_industries(*)),
+      uploaded_by_user:users!uploaded_by(id, full_name)
     `)
     .eq('id', id)
     .single()
 
   if (error || !report) {
+    console.error('Report query error:', error)
     notFound()
   }
 

@@ -12,17 +12,19 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { 
     id, signal_name, description, strength, potential_impact, 
-    impact_description, strength_description, impact_description,
+    impact_description, strength_description,
     categories, topics, steep_categories, geographical_focus, industries 
   } = body
 
   // Update basic fields
   const { error } = await supabase
     .from('signals')
-    .update({ 
+    .update({
       signal_name, description, strength, potential_impact,
-      impact_description, strength_description, impact_description,
-      updated_at: new Date().toISOString() 
+      impact_description, strength_description,
+      updated_at: new Date().toISOString(),
+      last_edited_by: session.user.id,
+      last_edited_at: new Date().toISOString()
     })
     .eq('id', id)
 

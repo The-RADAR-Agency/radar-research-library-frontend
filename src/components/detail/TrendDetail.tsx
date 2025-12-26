@@ -39,6 +39,9 @@ export default function TrendDetail({
   const [editedTrend, setEditedTrend] = useState(flatTrend)
   const [isSaving, setIsSaving] = useState(false)
   const [showSteepDropdown, setShowSteepDropdown] = useState(false)
+  const [showVerifyModal, setShowVerifyModal] = useState(false)
+  const [verificationNotes, setVerificationNotes] = useState('')
+  const [isVerifying, setIsVerifying] = useState(false)
 
   // Load taxonomy options
   useEffect(() => {
@@ -50,7 +53,29 @@ export default function TrendDetail({
     if (isEditing) loadOptions()
   }, [isEditing])
 
-  const handleClose = () => {
+  const handleVerify = async () => {
+    setIsVerifying(true)
+    try {
+      const response = await fetch('/api/trends/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: flatTrend.id,
+          verification_notes: verificationNotes,
+          verified_by: userId
+        })
+      })
+      
+      if (response.ok) {
+        window.location.reload()
+      }
+    } catch (err) {
+      console.error('Verification failed:', err)
+    }
+    setIsVerifying(false)
+  }
+
+const handleClose = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const tab = searchParams.get('tab') || 'uploads';
     router.push(`/library?tab=${tab}`);
@@ -70,7 +95,7 @@ export default function TrendDetail({
         likelihood: editedTrend.likelihood,
         trend_type_description: editedTrend.trend_type_description,
         time_horizon_description: editedTrend.time_horizon_description,
-        impact_potential_description: editedTrend.impact_potential_description,
+        impact_description: editedTrend.impact_description,
         likelihood_description: editedTrend.likelihood_description,
         categories: editedTrend.categories?.map(c => c.id) || [],
         topics: editedTrend.topics?.map(t => t.id) || [],
@@ -182,13 +207,27 @@ export default function TrendDetail({
             </div>
             <div className="flex items-center gap-2">
               {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="p-2 hover:bg-muted rounded-lg transition-colors"
-                  title="Edit"
-                >
-                  <Edit2 className="w-5 h-5" />
-                </button>
+                <>
+                  {!trend.verified_by && (
+                    <button
+                      onClick={() => setShowVerifyModal(true)}
+                      className="p-2 hover:bg-muted rounded-lg transition-colors"
+                      title="Verify"
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9 12l2 2 4-4"/>
+                      </svg>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="p-2 hover:bg-muted rounded-lg transition-colors"
+                    title="Edit"
+                  >
+                    <Edit2 className="w-5 h-5" />
+                  </button>
+                </>
               ) : (
                 <>
                   <button
@@ -253,180 +292,230 @@ export default function TrendDetail({
               )
             )}
 
-            {/* Extracted From */}
-            {trend.source_documents && (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2 whitespace-nowrap flex-shrink-0">
-                  <Bot className="w-4 h-4" />
-                  <span>Extracted from:</span>
-                </div>
-                <button 
-                  onClick={() => router.push(`/library/reports/${trend.extracted_from}`)}
-                  className="font-medium text-radar-primary hover:underline text-left"
-                >
-                  {trend.source_documents.title}
-                </button>
-              </div>
-            )}
-
-            {/* Observation Date */}
-            {trend.observation_date && (
-              <div className="text-sm text-muted-foreground">
-                Observed: {new Date(trend.observation_date).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </div>
-            )}
-
-            {/* Trend-Specific Fields */}
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Trend Characteristics</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Trend Strength */}
-                <div>
-                  <div className="flex items-center gap-2 text-sm mb-2">
-                    <span className="text-muted-foreground">Trend Strength:</span>
-                    {isEditing ? (
-                      <select
-                        value={editedTrend.trend_type || ''}
-                        onChange={(e) => setEditedTrend({ ...editedTrend, trend_type: e.target.value })}
-                        className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm"
-                      >
-                        <option value="">Select...</option>
-                        <option value="emerging_trend">Emerging Trend</option>
-                        <option value="strong_trend">Strong Trend</option>
-                        <option value="weak_signal">Weak Signal</option>
-                      </select>
-                    ) : (
-                      <span className="font-medium">
-                        {trend.trend_type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || '—'}
-                      </span>
+            {/* Attribution Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              {/* Extracted From */}
+              {trend.source_documents && (
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <Bot className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <span>Extracted from </span>
+                    <button 
+                      onClick={() => router.push(`/library/reports/${trend.extracted_from}`)}
+                      className="font-medium text-radar-primary hover:underline"
+                    >
+                      {trend.source_documents.title}
+                    </button>
+                    {trend.source_documents.upload_date && (
+                      <span> on {new Date(trend.source_documents.upload_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     )}
                   </div>
-                  {isEditing && (
-                    <textarea
-                      value={editedTrend.trend_type_description || ''}
-                      onChange={(e) => setEditedTrend({ ...editedTrend, trend_type_description: e.target.value })}
-                      placeholder="Describe trend strength..."
-                      rows={2}
-                      className="w-full px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none"
-                    />
-                  )}
-                  {!isEditing && trend.trend_type_description && (
-                    <p className="text-sm text-muted-foreground mt-1">{trend.trend_type_description}</p>
-                  )}
+                </div>
+              )}
+
+              {/* Observed */}
+              {trend.observation_date && (
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <svg className="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <div className="flex-1">
+                    <span>Observed {new Date(trend.observation_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Trend-Specific Fields */}
+            <div className="border-t border-border pt-6 space-y-3">
+              <h3 className="text-lg font-semibold">Trend Characteristics</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Trend Strength */}
+                <div>
+                  <div className="flex items-center gap-2 text-sm mb-1">
+                    <span className="text-muted-foreground">Trend Strength:</span>
+                    {isEditing ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <select
+                          value={editedTrend.trend_type || ''}
+                          onChange={(e) => setEditedTrend({ ...editedTrend, trend_type: e.target.value })}
+                          className="px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm"
+                        >
+                          <option value="">Select...</option>
+                          <option value="emerging_trend">Emerging Trend</option>
+                          <option value="strong_trend">Strong Trend</option>
+                          <option value="weak_signal">Weak Signal</option>
+                        </select>
+                        <textarea
+                          value={editedTrend.trend_type_description || ''}
+                          onChange={(e) => setEditedTrend({ ...editedTrend, trend_type_description: e.target.value })}
+                          placeholder="Describe trend strength..."
+                          rows={2}
+                          className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {trend.trend_type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || '—'}
+                        </span>
+                        {trend.trend_type_description && (
+                          <div className="relative group">
+                            <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                              {trend.trend_type_description}
+                              <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Time Horizon */}
                 <div>
-                  <div className="flex items-center gap-2 text-sm mb-2">
+                  <div className="flex items-center gap-2 text-sm mb-1">
                     <span className="text-muted-foreground">Time Horizon:</span>
                     {isEditing ? (
-                      <select
-                        value={editedTrend.time_horizon || ''}
-                        onChange={(e) => setEditedTrend({ ...editedTrend, time_horizon: e.target.value })}
-                        className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm"
-                      >
-                        <option value="">Select...</option>
-                        <option value="short_term">0-2 years</option>
-                        <option value="medium_term">2-5 years</option>
-                        <option value="long_term">5+ years</option>
-                      </select>
+                      <div className="flex items-center gap-2 flex-1">
+                        <select
+                          value={editedTrend.time_horizon || ''}
+                          onChange={(e) => setEditedTrend({ ...editedTrend, time_horizon: e.target.value })}
+                          className="px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm"
+                        >
+                          <option value="">Select...</option>
+                          <option value="short_term">0-2 years</option>
+                          <option value="medium_term">2-5 years</option>
+                          <option value="long_term">5+ years</option>
+                        </select>
+                        <textarea
+                          value={editedTrend.time_horizon_description || ''}
+                          onChange={(e) => setEditedTrend({ ...editedTrend, time_horizon_description: e.target.value })}
+                          placeholder="Describe time horizon..."
+                          rows={2}
+                          className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none"
+                        />
+                      </div>
                     ) : (
-                      <span className="font-medium">
-                        {trend.time_horizon === 'short_term' ? '0-2 years' : 
-                         trend.time_horizon === 'medium_term' ? '2-5 years' :
-                         trend.time_horizon === 'long_term' ? '5+ years' : '—'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {trend.time_horizon === 'short_term' ? '0-2 years' : 
+                           trend.time_horizon === 'medium_term' ? '2-5 years' :
+                           trend.time_horizon === 'long_term' ? '5+ years' : '—'}
+                        </span>
+                        {trend.time_horizon_description && (
+                          <div className="relative group">
+                            <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                              {trend.time_horizon_description}
+                              <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {isEditing && (
-                    <textarea
-                      value={editedTrend.time_horizon_description || ''}
-                      onChange={(e) => setEditedTrend({ ...editedTrend, time_horizon_description: e.target.value })}
-                      placeholder="Describe time horizon..."
-                      rows={2}
-                      className="w-full px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none"
-                    />
-                  )}
-                  {!isEditing && trend.time_horizon_description && (
-                    <p className="text-sm text-muted-foreground mt-1">{trend.time_horizon_description}</p>
-                  )}
                 </div>
 
                 {/* Impact Potential */}
                 <div>
-                  <div className="flex items-center gap-2 text-sm mb-2">
+                  <div className="flex items-center gap-2 text-sm mb-1">
                     <span className="text-muted-foreground">Impact Potential:</span>
                     {isEditing ? (
-                      <select
-                        value={editedTrend.impact_potential || ''}
-                        onChange={(e) => setEditedTrend({ ...editedTrend, impact_potential: e.target.value })}
-                        className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm"
-                      >
-                        <option value="">Select...</option>
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="transformative">Transformative</option>
-                      </select>
+                      <div className="flex items-center gap-2 flex-1">
+                        <select
+                          value={editedTrend.impact_potential || ''}
+                          onChange={(e) => setEditedTrend({ ...editedTrend, impact_potential: e.target.value })}
+                          className="px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm"
+                        >
+                          <option value="">Select...</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                          <option value="transformative">Transformative</option>
+                        </select>
+                        <textarea
+                          value={editedTrend.impact_description || ''}
+                          onChange={(e) => setEditedTrend({ ...editedTrend, impact_description: e.target.value })}
+                          placeholder="Describe impact potential..."
+                          rows={2}
+                          className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none"
+                        />
+                      </div>
                     ) : (
-                      <span className="font-medium">
-                        {trend.impact_potential?.replace(/\b\w/g, l => l.toUpperCase()) || '—'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {trend.impact_potential?.replace(/\b\w/g, l => l.toUpperCase()) || '—'}
+                        </span>
+                        {trend.impact_description && (
+                          <div className="relative group">
+                            <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                              {trend.impact_description}
+                              <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {isEditing && (
-                    <textarea
-                      value={editedTrend.impact_potential_description || ''}
-                      onChange={(e) => setEditedTrend({ ...editedTrend, impact_potential_description: e.target.value })}
-                      placeholder="Describe impact potential..."
-                      rows={2}
-                      className="w-full px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none"
-                    />
-                  )}
-                  {!isEditing && trend.impact_potential_description && (
-                    <p className="text-sm text-muted-foreground mt-1">{trend.impact_potential_description}</p>
-                  )}
                 </div>
 
                 {/* Likelihood */}
                 <div>
-                  <div className="flex items-center gap-2 text-sm mb-2">
+                  <div className="flex items-center gap-2 text-sm mb-1">
                     <span className="text-muted-foreground">Likelihood:</span>
                     {isEditing ? (
-                      <select
-                        value={editedTrend.likelihood || ''}
-                        onChange={(e) => setEditedTrend({ ...editedTrend, likelihood: e.target.value })}
-                        className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm"
-                      >
-                        <option value="">Select...</option>
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="very_high">Very High</option>
-                      </select>
+                      <div className="flex items-center gap-2 flex-1">
+                        <select
+                          value={editedTrend.likelihood || ''}
+                          onChange={(e) => setEditedTrend({ ...editedTrend, likelihood: e.target.value })}
+                          className="px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm"
+                        >
+                          <option value="">Select...</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                          <option value="very_high">Very High</option>
+                        </select>
+                        <textarea
+                          value={editedTrend.likelihood_description || ''}
+                          onChange={(e) => setEditedTrend({ ...editedTrend, likelihood_description: e.target.value })}
+                          placeholder="Describe likelihood..."
+                          rows={2}
+                          className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none"
+                        />
+                      </div>
                     ) : (
-                      <span className="font-medium">
-                        {trend.likelihood?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || '—'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {trend.likelihood?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || '—'}
+                        </span>
+                        {trend.likelihood_description && (
+                          <div className="relative group">
+                            <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                              {trend.likelihood_description}
+                              <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {isEditing && (
-                    <textarea
-                      value={editedTrend.likelihood_description || ''}
-                      onChange={(e) => setEditedTrend({ ...editedTrend, likelihood_description: e.target.value })}
-                      placeholder="Describe likelihood..."
-                      rows={2}
-                      className="w-full px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none"
-                    />
-                  )}
-                  {!isEditing && trend.likelihood_description && (
-                    <p className="text-sm text-muted-foreground mt-1">{trend.likelihood_description}</p>
-                  )}
                 </div>
               </div>
             </div>
@@ -448,6 +537,53 @@ export default function TrendDetail({
               />
             </div>
 
+            {/* Edit and Verification Status */}
+            {(trend.last_edited_by_user || trend.verified_by_user) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {/* Last Edited By */}
+                {trend.last_edited_by_user && (
+                  <div className="flex items-start gap-2 text-muted-foreground">
+                    <Edit2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <span>Edited by </span>
+                      <span className="font-medium">{trend.last_edited_by_user.full_name}</span>
+                      {trend.last_edited_at && (
+                        <span> on {new Date(trend.last_edited_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Verified By */}
+                {trend.verified_by_user && (
+                  <div className="flex items-start gap-2 text-muted-foreground">
+                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                    <div className="flex-1">
+                      <span>Verified by </span>
+                      <span className="font-medium">{trend.verified_by_user.full_name}</span>
+                      {trend.verification_date && (
+                        <span> on {new Date(trend.verification_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      )}
+                      {trend.verification_notes && (
+                        <div className="relative group inline-block ml-1">
+                          <svg className="w-4 h-4 text-muted-foreground cursor-help inline" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                          </svg>
+                          <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                            {trend.verification_notes}
+                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Related Research */}
             <div className="pt-6 border-t border-border">
               <h2 className="text-xl font-semibold mb-4">Related Research</h2>
@@ -460,7 +596,44 @@ export default function TrendDetail({
             </div>
           </div>
         </div>
+        </div>
+
+        {/* Verification Modal */}
+        {showVerifyModal && (
+          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold mb-4">Verify Content</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                This content was originally extracted by AI. Do you verify that it is accurate?
+              </p>
+              <textarea
+                value={verificationNotes}
+                onChange={(e) => setVerificationNotes(e.target.value)}
+                placeholder="Add verification notes (optional)..."
+                rows={3}
+                className="w-full px-3 py-2 border border-border rounded-lg focus:border-radar-primary outline-none resize-none text-sm mb-4"
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => {
+                    setShowVerifyModal(false);
+                    setVerificationNotes('');
+                  }}
+                  className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleVerify}
+                  disabled={isVerifying}
+                  className="px-4 py-2 text-sm bg-radar-primary text-white rounded-lg hover:bg-radar-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {isVerifying ? 'Verifying...' : 'Verify'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  )
-}
+    )
+  }

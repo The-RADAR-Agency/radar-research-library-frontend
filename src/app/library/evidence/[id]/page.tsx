@@ -11,9 +11,18 @@ export default async function EvidenceDetailPage({ params }: { params: Promise<{
     return null
   }
 
-  const { data: evidence, error } = await supabase.from('evidence').select('*').eq('id', id).single()
+  const { data: evidence, error } = await supabase
+    .from('evidence')
+    .select(`
+      *,
+      verified_by_user:users!verified_by(id, full_name),
+      last_edited_by_user:users!last_edited_by(id, full_name)
+    `)
+    .eq('id', id)
+    .single()
 
   if (error || !evidence) {
+    console.error('Evidence query error:', error)
     notFound()
   }
 
@@ -27,10 +36,6 @@ export default async function EvidenceDetailPage({ params }: { params: Promise<{
     supabase.from('trends_evidence').select('trends(*)').eq('evidence_id', id),
     supabase.from('signals_evidence').select('signals(*)').eq('evidence_id', id)
   ])
-  
-  console.log('Evidence ID:', id);
-  console.log('Trends evidence result:', JSON.stringify(relatedTrends, null, 2));
-  console.log('Signals evidence result:', JSON.stringify(relatedSignals, null, 2));
   
   const extractedTopics = topics.data?.map(t => t.topics).filter(Boolean) || []
   const extractedCategories = categories.data?.map(c => c.categories).filter(Boolean) || []

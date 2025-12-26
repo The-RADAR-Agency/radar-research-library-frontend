@@ -12,7 +12,11 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { id, evidence_text, evidence_type, credibility_rating, credibility_description, methodology, quantitative_value, source_link, categories, topics, steep_categories, geographical_focus, industries } = body
 
-  const { error } = await supabase.from('evidence').update({ evidence_text, evidence_type, credibility_rating, credibility_description, methodology, quantitative_value, source_link, updated_at: new Date().toISOString() }).eq('id', id)
+  const { error } = await supabase.from('evidence').update({
+      evidence_text, evidence_type, credibility_rating, credibility_description, methodology, quantitative_value, source_link, updated_at: new Date().toISOString(),
+      last_edited_by: session.user.id,
+      last_edited_at: new Date().toISOString()
+    }).eq('id', id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

@@ -14,7 +14,11 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
   // Load the driver with basic data first
   const { data: driver, error } = await supabase
     .from('drivers')
-    .select('*')
+    .select(`
+      *,
+      last_edited_by_user:users!last_edited_by(id, full_name),
+      verified_by_user:users!verified_by(id, full_name)
+    `)
     .eq('id', id)
     .single()
 
@@ -38,7 +42,10 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
     supabase.from('drivers_steep_categories').select('steep_categories(*)').eq('driver_id', id),
     supabase.from('drivers_geographical_focus').select('geographical_focus(*)').eq('driver_id', id),
     supabase.from('drivers_hubspot_industries').select('hubspot_industries(*)').eq('driver_id', id),
-    supabase.from('source_documents').select('*').eq('id', driver.extracted_from).single(),
+    supabase.from('source_documents').select(`
+      *,
+      uploaded_by_user:users!uploaded_by(id, full_name)
+    `).eq('id', driver.extracted_from).single(),
     supabase.from('drivers_trends').select('trends(*, steep_categories(*))').eq('driver_id', id),
     supabase.from('drivers_signals').select('signals(*, steep_categories(*))').eq('driver_id', id)
   ])

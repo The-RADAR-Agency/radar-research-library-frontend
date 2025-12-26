@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
+  try {
   const supabase = await createServerSupabaseClient()
   const { data: { session } } = await supabase.auth.getSession()
   
@@ -10,29 +11,36 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json()
+  console.log('Received payload:', JSON.stringify(body, null, 2))
   const { 
     id, trend_name, description, trend_type, time_horizon, 
     impact_potential, impact_description, likelihood,
     trend_type_description, time_horizon_description, 
-    impact_potential_description, likelihood_description,
+    likelihood_description,
     categories, topics, steep_categories, geographical_focus, industries 
   } = body
 
   // Update basic fields
+  console.log('Updating trend with session user:', session.user.id)
   const { error } = await supabase
     .from('trends')
     .update({ 
-      trend_name, description, trend_type, time_horizon,
-      impact_potential, impact_description, likelihood,
-      trend_type_description, time_horizon_description,
-      impact_potential_description, likelihood_description,
+      trend_name, description, trend_type, time_horizon, impact_potential, likelihood,
+      trend_type_description, time_horizon_description, impact_description, likelihood_description,
+      last_edited_by: session.user.id,
+      last_edited_at: new Date().toISOString(),
       updated_at: new Date().toISOString() 
     })
     .eq('id', id)
 
+  console.log('Database update completed. Error:', error)
+  
   if (error) {
+    console.error('Database error details:', JSON.stringify(error, null, 2))
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+  
+  console.log('Update successful, proceeding to junction tables')
 
   // Update taxonomy junction tables
   if (categories) {
@@ -81,4 +89,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('FULL ERROR:', error)
+    return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 })
+  }
 }

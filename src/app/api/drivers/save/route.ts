@@ -15,7 +15,11 @@ export async function POST(request: Request) {
   // Update basic fields
   const { error } = await supabase
     .from('drivers')
-    .update({ driver_name, description, updated_at: new Date().toISOString() })
+    .update({
+      driver_name, description, updated_at: new Date().toISOString(),
+      last_edited_by: session.user.id,
+      last_edited_at: new Date().toISOString()
+    })
     .eq('id', id)
 
   if (error) {

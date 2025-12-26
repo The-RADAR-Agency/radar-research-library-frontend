@@ -1,0 +1,73 @@
+
+> radar-research-library@1.0.0 dev
+> next dev
+
+   ▲ Next.js 15.1.0
+   - Local:        http://localhost:3000
+   - Network:      http://10.192.226.101:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1373ms
+ ○ Compiling /library/evidence/[id] ...
+ ⨯ ./src/components/detail/EvidenceDetail.tsx
+Error:   [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/alexandereley/Documents/GitHub/radar-research-library-frontend/src/components/detail/EvidenceDetail.tsx[0m:96:1]
+ [2m93[0m |   }
+ [2m94[0m | 
+ [2m95[0m |   return (
+ [2m96[0m |     <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+    : [35;1m     ^^^[0m
+ [2m97[0m |       <div className="min-h-screen py-8 px-4">
+ [2m98[0m |         <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl">
+ [2m99[0m |           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/detail/EvidenceDetail.tsx
+./src/app/library/evidence/[id]/page.tsx
+ ⨯ ./src/components/detail/EvidenceDetail.tsx
+Error:   [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/alexandereley/Documents/GitHub/radar-research-library-frontend/src/components/detail/EvidenceDetail.tsx[0m:96:1]
+ [2m93[0m |   }
+ [2m94[0m | 
+ [2m95[0m |   return (
+ [2m96[0m |     <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+    : [35;1m     ^^^[0m
+ [2m97[0m |       <div className="min-h-screen py-8 px-4">
+ [2m98[0m |         <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl">
+ [2m99[0m |           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/detail/EvidenceDetail.tsx
+./src/app/library/evidence/[id]/page.tsx
+ ⨯ ./src/components/detail/EvidenceDetail.tsx
+Error:   [31mx[0m Unexpected token `div`. Expected jsx identifier
+    ,-[[36;1;4m/Users/alexandereley/Documents/GitHub/radar-research-library-frontend/src/components/detail/EvidenceDetail.tsx[0m:96:1]
+ [2m93[0m |   }
+ [2m94[0m | 
+ [2m95[0m |   return (
+ [2m96[0m |     <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+    : [35;1m     ^^^[0m
+ [2m97[0m |       <div className="min-h-screen py-8 px-4">
+ [2m98[0m |         <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl">
+ [2m99[0m |           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/detail/EvidenceDetail.tsx
+./src/app/library/evidence/[id]/page.tsx
+ GET /_next/static/webpack/49733e1dbe126019.webpack.hot-update.json 500 in 2657ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /library/evidence/22e5ad0d-b820-420b-9aeb-f813d4cab084 500 in 276ms
+ GET /library/evidence/22e5ad0d-b820-420b-9aeb-f813d4cab084 500 in 8ms

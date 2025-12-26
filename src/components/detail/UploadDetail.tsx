@@ -25,17 +25,20 @@ export default function UploadDetail({
   relatedSignals,
   userId
 }: UploadDetailProps) {
-  // Extract industries from junction table structure
-  const initialIndustries = report.source_documents_hubspot_industries?.map((j: any) => j.hubspot_industries) || []
-  console.log('Initial report data:', report)
-  console.log('Extracted industries:', initialIndustries)
-  console.log('report.hubspot_industries:', report.hubspot_industries)
-
+  // DEBUG LOGS
+  console.log('Report data:', report)
+  console.log('Report source:', (report as any).source)
+  console.log('Source org name:', (report as any).source?.organization_name)
+  
+  // Extract industries from junction table structure - cast to any to avoid TypeScript errors
+  const reportData = report as any
+  const initialIndustries = reportData.source_documents_hubspot_industries?.map((j: any) => j.hubspot_industries).filter(Boolean) || []
+  
   const router = useRouter()
   const [allOptions, setAllOptions] = useState<any>(null)
 
   const [isEditing, setIsEditing] = useState(false)
-  const [editedReport, setEditedReport] = useState(report)
+  const [editedReport, setEditedReport] = useState<any>(report)
   const [isSaving, setIsSaving] = useState(false)
 
   // Load taxonomy options
@@ -61,14 +64,11 @@ export default function UploadDetail({
         summary: editedReport.summary,
         key_themes: editedReport.key_themes,
         publication_date: editedReport.publication_date,
-        categories: editedReport.categories?.map(c => c.id) || [],
-        topics: editedReport.topics?.map(t => t.id) || [],
-        geographical_focus: (editedReport.geographicalFocus || editedReport.geographical_focus)?.map(g => g.id) || [],
-        industries: editedReport.industries?.map(i => i.id) || []
+        categories: editedReport.categories?.map((c: any) => c.id) || [],
+        topics: editedReport.topics?.map((t: any) => t.id) || [],
+        geographical_focus: editedReport.geographical_focus?.map((g: any) => g.id) || [],
+        industries: editedReport.industries?.map((i: any) => i.id) || []
       }
-      console.log('Saving payload:', payload)
-      console.log('INDUSTRIES ONLY:', payload.industries)
-      console.log('editedReport.industries:', editedReport.industries)
       
       const response = await fetch('/api/reports/save', {
         method: 'POST',
@@ -86,7 +86,7 @@ export default function UploadDetail({
     setIsEditing(false)
   }
 
-    const handleCancel = () => {
+  const handleCancel = () => {
     setEditedReport(report)
     setIsEditing(false)
   }
@@ -190,8 +190,8 @@ export default function UploadDetail({
                 </div>
               ) : (
                 <p>
-                  {report.source?.organization_name && <span className="font-medium">{report.source.organization_name}</span>}
-                  {report.source?.organization_name && report.publication_date && <span> · </span>}
+                  {reportData.source?.organization_name && <span className="font-medium">{reportData.source.organization_name}</span>}
+                  {reportData.source?.organization_name && report.publication_date && <span> · </span>}
                   {report.publication_date && formatDate(report.publication_date)}
                 </p>
               )}
@@ -234,7 +234,7 @@ export default function UploadDetail({
                 categories={editedReport.categories || report.categories}
                 topics={editedReport.topics || report.topics}
                 industries={editedReport.industries || initialIndustries}
-                geographicalFocus={editedReport.geographicalFocus || editedReport.geographical_focus || report.geographical_focus}
+                geographicalFocus={editedReport.geographical_focus || report.geographical_focus}
                 steep={[]} // Reports don't have STEEP
               />
             </div>
@@ -254,7 +254,7 @@ export default function UploadDetail({
                 drivers={relatedDrivers}
                 trends={relatedTrends}
                 signals={relatedSignals}
-                hideEvidence={true}
+                evidence={[]}
               />
             </div>
 
