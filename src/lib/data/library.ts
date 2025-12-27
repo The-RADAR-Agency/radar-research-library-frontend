@@ -17,13 +17,14 @@ export async function loadLibraryData(userId: string) {
   const driversWithTaxonomy = await enrichWithTaxonomy(supabase, drivers.data || [], 'drivers')
   const trendsWithTaxonomy = await enrichWithTaxonomy(supabase, trends.data || [], 'trends')
   const signalsWithTaxonomy = await enrichWithTaxonomy(supabase, signals.data || [], 'signals')
+  const evidenceWithTaxonomy = await enrichWithTaxonomy(supabase, evidence.data || [], 'evidence')
 
   return {
     reports: reports.data || [],
     drivers: driversWithTaxonomy,
     trends: trendsWithTaxonomy,
     signals: signalsWithTaxonomy,
-    evidence: evidence.data || [],
+    evidence: evidenceWithTaxonomy,
     filterOptions
   }
 }
@@ -49,12 +50,14 @@ export async function loadLibraryDataServer(userId: string) {
     const driversWithTaxonomy = await enrichWithTaxonomy(supabase, drivers.data || [], 'drivers')
     const trendsWithTaxonomy = await enrichWithTaxonomy(supabase, trends.data || [], 'trends')
     const signalsWithTaxonomy = await enrichWithTaxonomy(supabase, signals.data || [], 'signals')
+    const evidenceWithTaxonomy = await enrichWithTaxonomy(supabase, evidence.data || [], 'evidence')
 
     console.log('Data loaded:', {
       reportsCount: reports.data?.length || 0,
       driversCount: driversWithTaxonomy.length,
       trendsCount: trendsWithTaxonomy.length,
       signalsCount: signalsWithTaxonomy.length,
+      evidenceCount: evidenceWithTaxonomy.length,
       filterOptions
     })
 
@@ -63,7 +66,7 @@ export async function loadLibraryDataServer(userId: string) {
       drivers: driversWithTaxonomy,
       trends: trendsWithTaxonomy,
       signals: signalsWithTaxonomy,
-      evidence: evidence.data || [],
+      evidence: evidenceWithTaxonomy,
       filterOptions
     }
   } catch (error) {
@@ -89,22 +92,25 @@ async function enrichWithTaxonomy(supabase: any, entities: any[], entityType: st
   if (!entities.length) return []
 
   const entityIds = entities.map(e => e.id)
+  
+  // Handle singular form - 'evidence' is already singular, others need last char removed
+  const singularType = entityType === 'evidence' ? 'evidence' : entityType.slice(0, -1)
 
   // Load all junction table data in parallel
   const [topics, categories, steep, geo, industries] = await Promise.all([
-    supabase.from(`${entityType}_topics`).select('*, topics(*)').in(`${entityType.slice(0, -1)}_id`, entityIds),
-    supabase.from(`${entityType}_categories`).select('*, categories(*)').in(`${entityType.slice(0, -1)}_id`, entityIds),
-    supabase.from(`${entityType}_steep_categories`).select('*, steep_categories(*)').in(`${entityType.slice(0, -1)}_id`, entityIds),
-    supabase.from(`${entityType}_geographical_focus`).select('*, geographical_focus(*)').in(`${entityType.slice(0, -1)}_id`, entityIds),
-    supabase.from(`${entityType}_hubspot_industries`).select('*, hubspot_industries(*)').in(`${entityType.slice(0, -1)}_id`, entityIds)
+    supabase.from(`${entityType}_topics`).select('*, topics(*)').in(`${singularType}_id`, entityIds),
+    supabase.from(`${entityType}_categories`).select('*, categories(*)').in(`${singularType}_id`, entityIds),
+    supabase.from(`${entityType}_steep_categories`).select('*, steep_categories(*)').in(`${singularType}_id`, entityIds),
+    supabase.from(`${entityType}_geographical_focus`).select('*, geographical_focus(*)').in(`${singularType}_id`, entityIds),
+    supabase.from(`${entityType}_hubspot_industries`).select('*, hubspot_industries(*)').in(`${singularType}_id`, entityIds)
   ])
 
   // Group by entity ID
-  const topicsByEntity = groupBy(topics.data || [], `${entityType.slice(0, -1)}_id`)
-  const categoriesByEntity = groupBy(categories.data || [], `${entityType.slice(0, -1)}_id`)
-  const steepByEntity = groupBy(steep.data || [], `${entityType.slice(0, -1)}_id`)
-  const geoByEntity = groupBy(geo.data || [], `${entityType.slice(0, -1)}_id`)
-  const industriesByEntity = groupBy(industries.data || [], `${entityType.slice(0, -1)}_id`)
+  const topicsByEntity = groupBy(topics.data || [], `${singularType}_id`)
+  const categoriesByEntity = groupBy(categories.data || [], `${singularType}_id`)
+  const steepByEntity = groupBy(steep.data || [], `${singularType}_id`)
+  const geoByEntity = groupBy(geo.data || [], `${singularType}_id`)
+  const industriesByEntity = groupBy(industries.data || [], `${singularType}_id`)
 
   // Attach to entities
   return entities.map(entity => ({

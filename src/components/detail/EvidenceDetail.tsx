@@ -274,12 +274,12 @@ export default function EvidenceDetail({
                       </div>
                       {evidence.credibility_description && (
                         <div className="relative group">
-                          <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                          <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                           </svg>
-                          <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                          <div className="absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] pointer-events-none">
                             {evidence.credibility_description}
-                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                            
                           </div>
                         </div>
                       )}
@@ -295,7 +295,7 @@ export default function EvidenceDetail({
                 {isEditing ? (
                   <textarea value={editedEvidence.methodology || ''} onChange={(e) => setEditedEvidence({ ...editedEvidence, methodology: e.target.value })} placeholder="Describe the methodology..." rows={3} className="flex-1 px-3 py-1.5 border border-border rounded-lg focus:border-radar-primary outline-none text-sm resize-none" />
                 ) : (
-                  evidence.methodology && <span className="text-foreground flex-1">{evidence.methodology}</span>
+                  evidence.methodology && <span className="text-foreground flex-1"><p className="text-xs text-gray-600 leading-relaxed">{evidence.methodology}</p></span>
                 )}
               </div>
             </div>
@@ -332,12 +332,12 @@ export default function EvidenceDetail({
                       )}
                       {evidence.verification_notes && (
                         <div className="relative group inline-block ml-1">
-                          <svg className="w-4 h-4 text-muted-foreground cursor-help inline" viewBox="0 0 24 24" fill="currentColor">
+                          <svg className="w-3.5 h-3.5 text-gray-400 cursor-help inline" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                           </svg>
-                          <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                          <div className="absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] pointer-events-none">
                             {evidence.verification_notes}
-                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                            
                           </div>
                         </div>
                       )}

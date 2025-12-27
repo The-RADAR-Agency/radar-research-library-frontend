@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { X, Edit2, Check, XCircle, Bot } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getCardImageUrl, getImageStyle, truncateText } from '@/lib/utils'
 import TaxonomyGrid from './TaxonomyGrid'
 import RelatedResearchTabs from './RelatedResearchTabs'
 import ImageUpload from '../ImageUpload'
 import type { Trend, Driver, Signal } from '@/lib/types'
+import { createClient } from '@/lib/supabase/client'
+import { filterByVisibility } from '@/lib/data/visibility'
 
 interface TrendDetailProps {
   trend: Trend
@@ -24,6 +26,10 @@ export default function TrendDetail({
   relatedEvidence,
   userId
 }: TrendDetailProps) {
+  const searchParams = useSearchParams()
+  const [prevTrendId, setPrevTrendId] = useState<string | null>(null)
+  const [nextTrendId, setNextTrendId] = useState<string | null>(null)
+  
   // Flatten junction table data
   const flatTrend = {
     ...trend,
@@ -53,6 +59,51 @@ export default function TrendDetail({
     }
     if (isEditing) loadOptions()
   }, [isEditing])
+
+  // Load prev/next trend IDs
+  useEffect(() => {
+    async function loadNavigation() {
+      try {
+        const supabase = createClient()
+        
+        const { data: reports } = await supabase.from('source_documents').select('*')
+        const { data: allTrends } = await supabase
+          .from('trends')
+          .select('id, created_at, trends_topics(topics(id)), trends_categories(categories(id)), trends_steep_categories(steep_categories(id)), trends_geographical_focus(geographical_focus(id)), trends_hubspot_industries(hubspot_industries(id))')
+          .order('created_at', { ascending: true })
+        
+        if (!allTrends || !reports) return
+        
+        const filters = {
+          topics: searchParams.get('topics')?.split(',').filter(Boolean) || [],
+          categories: searchParams.get('categories')?.split(',').filter(Boolean) || [],
+          steep: searchParams.get('steep')?.split(',').filter(Boolean) || [],
+          geographies: searchParams.get('geographies')?.split(',').filter(Boolean) || [],
+          industries: searchParams.get('industries')?.split(',').filter(Boolean) || [],
+          visibility: searchParams.get('visibility') || 'All'
+        }
+        
+        const filterLogic = searchParams.get('filterLogic') === 'AND' ? 'AND' : 'OR'
+        let filtered = filterByVisibility(allTrends, userId, reports, filters.visibility as any)
+        
+        // Apply filters (abbreviated for now)
+        if (filters.topics.length > 0) {
+          filtered = filtered.filter((t: any) => t.trends_topics?.some((j: any) => filters.topics.includes(j.topics?.id)))
+        }
+        
+        const currentIndex = filtered.findIndex((t: any) => t.id === trend.id)
+        
+        if (currentIndex !== -1) {
+          setPrevTrendId(currentIndex > 0 ? filtered[currentIndex - 1].id : null)
+          setNextTrendId(currentIndex < filtered.length - 1 ? filtered[currentIndex + 1].id : null)
+        }
+      } catch (error) {
+        console.error('Navigation loading error:', error)
+      }
+    }
+    
+    loadNavigation()
+  }, [trend.id, userId, searchParams.toString()])
 
   const handleVerify = async () => {
     setIsVerifying(true)
@@ -374,12 +425,12 @@ const handleClose = () => {
                         </span>
                         {trend.trend_type_description && (
                           <div className="relative group">
-                            <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                            <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                             </svg>
-                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
-                              {trend.trend_type_description}
-                              <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                            <div className="absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] pointer-events-none">
+                              <p className="text-xs text-gray-600 leading-relaxed">{trend.trend_type_description}</p>
+                              
                             </div>
                           </div>
                         )}
@@ -421,12 +472,12 @@ const handleClose = () => {
                         </span>
                         {trend.time_horizon_description && (
                           <div className="relative group">
-                            <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                            <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                             </svg>
-                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                            <div className="absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] pointer-events-none">
                               {trend.time_horizon_description}
-                              <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                              
                             </div>
                           </div>
                         )}
@@ -467,12 +518,12 @@ const handleClose = () => {
                         </span>
                         {trend.impact_description && (
                           <div className="relative group">
-                            <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                            <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                             </svg>
-                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                            <div className="absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] pointer-events-none">
                               {trend.impact_description}
-                              <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                              
                             </div>
                           </div>
                         )}
@@ -513,12 +564,12 @@ const handleClose = () => {
                         </span>
                         {trend.likelihood_description && (
                           <div className="relative group">
-                            <svg className="w-4 h-4 text-muted-foreground cursor-help" viewBox="0 0 24 24" fill="currentColor">
+                            <svg className="w-3.5 h-3.5 text-gray-400 cursor-help" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                             </svg>
-                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                            <div className="absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] pointer-events-none">
                               {trend.likelihood_description}
-                              <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                              
                             </div>
                           </div>
                         )}
@@ -578,12 +629,12 @@ const handleClose = () => {
                       )}
                       {trend.verification_notes && (
                         <div className="relative group inline-block ml-1">
-                          <svg className="w-4 h-4 text-muted-foreground cursor-help inline" viewBox="0 0 24 24" fill="currentColor">
+                          <svg className="w-3.5 h-3.5 text-gray-400 cursor-help inline" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                           </svg>
-                          <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-10">
+                          <div className="absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] pointer-events-none">
                             {trend.verification_notes}
-                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                            
                           </div>
                         </div>
                       )}

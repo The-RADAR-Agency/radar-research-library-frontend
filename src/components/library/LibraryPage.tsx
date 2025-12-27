@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
-import { Filter, Search } from 'lucide-react'
+import { Filter, Search, Info } from 'lucide-react'
 import type { SourceDocument, Driver, Trend, Signal, Evidence, LibraryFilters } from '@/lib/types'
 import { filterByVisibility, filterReportsByVisibility } from '@/lib/data/visibility'
 import VerificationBadge from '@/components/VerificationBadge'
@@ -500,23 +500,57 @@ function ReportCard({ report, router }: { report: SourceDocument, router: any })
   )
 }
 
-function EntityCard({ entity, type, router }: { entity: Driver | Trend | Signal, type: 'driver' | 'trend' | 'signal', router: any }) {
-  const name = 'driver_name' in entity ? entity.driver_name : 'trend_name' in entity ? entity.trend_name : entity.signal_name
+function EntityCard({ entity, type, router }: { entity: Driver | Trend | Signal | any, type: 'driver' | 'trend' | 'signal' | 'evidence', router: any }) {
+  const name = type === 'evidence' 
+    ? entity.evidence_text 
+    : 'driver_name' in entity 
+      ? entity.driver_name 
+      : 'trend_name' in entity 
+        ? entity.trend_name 
+        : entity.signal_name
   const observationDate = 'observation_date' in entity ? entity.observation_date : null
+  const isEvidence = type === 'evidence'
 
   return (
-    <div onClick={() => router.push(`/library/${type}s/${entity.id}`)} className="bg-white rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-card-hover cursor-pointer flex flex-col h-full">
+    <div onClick={() => router.push(`/library/${type === 'evidence' ? 'evidence' : type + 's'}/${entity.id}`)} className="bg-white rounded-xl border border-border transition-shadow hover:shadow-card-hover cursor-pointer flex flex-col h-full relative">
       <div 
-        className="h-[119px] bg-cover bg-center flex-shrink-0"
+        className="h-[119px] bg-cover bg-center flex-shrink-0 rounded-t-xl overflow-hidden"
         style={getImageStyle(entity)}
       />
       
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="font-headline font-bold text-lg mb-2 leading-tight">{name}</h3>
-        
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-4 leading-relaxed flex-1">
-          {entity.description}
-        </p>
+      <div className="p-5 flex flex-col flex-1 overflow-visible relative">
+        {isEvidence ? (
+          // Evidence: Evidence type pill with methodology info icon
+          <>
+            <div className="mb-3 flex items-center gap-2">
+              {entity.evidence_type && (
+                <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                  {entity.evidence_type}
+                </span>
+              )}
+              {entity.methodology && (
+                <div className="relative group">
+                  <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
+                  <div className="absolute left-0 top-full mt-1 w-64 p-3 bg-white border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] pointer-events-none">
+                    <p className="text-xs text-gray-600 leading-relaxed">{entity.methodology}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="text-base text-foreground mb-4 line-clamp-5 leading-relaxed flex-1">
+              {name}
+            </p>
+          </>
+        ) : (
+          // Other entities: Headline + description
+          <>
+            <h3 className="font-headline font-bold text-lg mb-2 leading-tight">{name}</h3>
+            
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-4 leading-relaxed flex-1">
+              {entity.description}
+            </p>
+          </>
+        )}
 
         <div className="mt-auto flex items-end justify-between">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">

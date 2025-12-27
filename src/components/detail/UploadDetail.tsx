@@ -16,6 +16,7 @@ interface UploadDetailProps {
   relatedDrivers: Driver[]
   relatedTrends: Trend[]
   relatedSignals: Signal[]
+  relatedEvidence: any[]
   userId: string
 }
 
@@ -24,6 +25,7 @@ export default function UploadDetail({
   relatedDrivers,
   relatedTrends,
   relatedSignals,
+  relatedEvidence,
   userId
 }: UploadDetailProps) {
   // DEBUG LOGS
@@ -263,7 +265,7 @@ export default function UploadDetail({
                 drivers={relatedDrivers}
                 trends={relatedTrends}
                 signals={relatedSignals}
-                evidence={[]}
+                evidence={relatedEvidence}
               />
             </div>
 

@@ -33,7 +33,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   }
 
   // Load related research extracted from this report
-  const [drivers, trends, signals] = await Promise.all([
+  const [drivers, trends, signals, evidence] = await Promise.all([
     supabase
       .from('drivers')
       .select('*, steep_categories(*)')
@@ -45,6 +45,10 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
     supabase
       .from('signals')
       .select('*, steep_categories(*)')
+      .eq('extracted_from', id),
+    supabase
+      .from('evidence')
+      .select('*, steep_categories(*)')
       .eq('extracted_from', id)
   ])
 
@@ -54,6 +58,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
       relatedDrivers={drivers.data || []}
       relatedTrends={trends.data || []}
       relatedSignals={signals.data || []}
+      relatedEvidence={evidence.data || []}
       userId={session.user.id}
     />
   )
