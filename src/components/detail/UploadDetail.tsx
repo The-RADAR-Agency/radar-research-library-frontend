@@ -109,12 +109,16 @@ export default function UploadDetail({
             </div>
             <div className="flex items-center gap-2">
               {report.file_url && (
-                <button
+                <a
+                  href={report.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
                   className="p-2 hover:bg-muted rounded-lg transition-colors"
                   title="Download PDF"
                 >
                   <Download className="w-5 h-5" />
-                </button>
+                </a>
               )}
               {!isEditing ? (
                 <button

@@ -88,9 +88,24 @@ export default function RelatedResearchTabs({
                     style={getImageStyle(item)}
                   />
                   <div className="p-3 flex-1 flex flex-col">
-                    <h3 className="font-headline font-semibold text-sm line-clamp-3 mb-auto">
-                      {item.driver_name || item.trend_name || item.signal_name || item.evidence_text || item.title}
-                    </h3>
+                    {activeTab === 'evidence' ? (
+                      // Evidence: Non-italic body text
+                      <p className="text-sm text-foreground line-clamp-4 leading-relaxed mb-auto">
+                        {item.evidence_text}
+                      </p>
+                    ) : (
+                      // Other entities: Headline + description
+                      <>
+                        <h3 className="font-headline font-semibold text-sm line-clamp-2 mb-1">
+                          {item.driver_name || item.trend_name || item.signal_name || item.title}
+                        </h3>
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-auto">
+                            {item.description}
+                          </p>
+                        )}
+                      </>
+                    )}
                     <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                       {item.steep_categories && item.steep_categories.length > 0 && (
                         <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-xs">

@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
-import { Filter, Search, Info } from 'lucide-react'
+import { Filter, Search, Info, MessageSquare, X } from 'lucide-react'
 import type { SourceDocument, Driver, Trend, Signal, Evidence, LibraryFilters } from '@/lib/types'
 import { filterByVisibility, filterReportsByVisibility } from '@/lib/data/visibility'
 import VerificationBadge from '@/components/VerificationBadge'
 import { getCardImageUrl, getImageStyle, truncateText, formatDate, formatDocumentType } from '@/lib/utils'
 import MultiSelectFilter from './MultiSelectFilter'
+import ChatDrawer from '@/components/chat/ChatDrawer'
 
 interface LibraryPageProps {
   initialData: {
@@ -23,10 +24,11 @@ interface LibraryPageProps {
 }
 
 export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
-    const router = useRouter()
+  const router = useRouter()
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'uploads' | 'drivers' | 'trends' | 'signals' | 'evidence'>((searchParams.get('tab') as any) || 'uploads')
   const [showFilters, setShowFilters] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const [filters, setFilters] = useState<LibraryFilters>({
     topics: [],
     categories: [],
@@ -58,9 +60,6 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
   ]
 
   const filteredData = useMemo(() => {
-    console.log('=== FILTER DEBUG ===')
-    console.log('Filter options steep_categories:', initialData.filterOptions.steep_categories)
-    
     let reports = filterReportsByVisibility(initialData.reports, userId, filters.visibility as any)
 
     // Apply taxonomy filters to reports
@@ -87,6 +86,7 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
         reports = reports.filter(r => filters.geographies.every(geoId => r.geographical_focus?.some((g: any) => g.id === geoId)))
       }
     }
+    
     let drivers = filterByVisibility(initialData.drivers, userId, initialData.reports, filters.visibility as any)
     let trends = filterByVisibility(initialData.trends, userId, initialData.reports, filters.visibility as any)
     let signals = filterByVisibility(initialData.signals, userId, initialData.reports, filters.visibility as any)
@@ -172,54 +172,40 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
       case 'trends': return filteredData.trends.length
       case 'signals': return filteredData.signals.length
       case 'evidence': return filteredData.evidence.length
-      default: return 0
     }
-  }, [activeTab, filteredData])
-  
-  // Check if there are more items to load
-  const hasMore = useMemo(() => {
-    switch (activeTab) {
-      case 'uploads': return itemsToShow.uploads < filteredData.reports.length
-      case 'drivers': return itemsToShow.drivers < filteredData.drivers.length
-      case 'trends': return itemsToShow.trends < filteredData.trends.length
-      case 'signals': return itemsToShow.signals < filteredData.signals.length
-      case 'evidence': return itemsToShow.evidence < filteredData.evidence.length
-      default: return false
-    }
-  }, [activeTab, itemsToShow, filteredData])
+  }, [filteredData, activeTab])
 
-  // Load more items for active tab
+  const hasMore = useMemo(() => {
+    const shown = itemsToShow[activeTab]
+    return shown < activeCount
+  }, [itemsToShow, activeTab, activeCount])
+
   const loadMore = useCallback(() => {
-    if (!hasMore) return
-    
     setItemsToShow(prev => ({
       ...prev,
       [activeTab]: prev[activeTab] + ITEMS_PER_PAGE
     }))
-  }, [activeTab, hasMore])
+  }, [activeTab])
 
-  // Intersection Observer for infinite scroll
+  // Infinite scroll observer
   useEffect(() => {
+    if (!hasMore) return
+
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore) {
+        if (entries[0].isIntersecting) {
           loadMore()
         }
       },
       { threshold: 0.1 }
     )
 
-    const currentRef = loadMoreRef.current
-    if (currentRef) {
-      observer.observe(currentRef)
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
     }
 
-    return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef)
-      }
-    }
-  }, [loadMore, hasMore])
+    return () => observer.disconnect()
+  }, [hasMore, loadMore])
 
   // Reset pagination when tab changes
   useEffect(() => {
@@ -251,14 +237,14 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
               >
                 {tab.label}
                 {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6B35]" />
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-radar-primary" />
                 )}
               </button>
             ))}
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            {/* Search icon - placeholder for future functionality */}
+            {/* Search icon - placeholder */}
             <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
               <Search className="w-5 h-5" />
             </button>
@@ -271,130 +257,20 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
               <Filter className="w-5 h-5" />
               <span className="text-sm font-medium">({activeCount})</span>
             </button>
+
+            {/* Chat icon */}
+            <button 
+              onClick={() => setChatOpen(true)}
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              title="Research Assistant"
+            >
+              <MessageSquare className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
 
-      {showFilters && (
-        <div className="mb-8 p-6 bg-white rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Filters</h3>
-            <div className="flex items-center gap-3">
-              {/* Visibility dropdown */}
-              <div className="relative group">
-                <button className="p-1.5 hover:bg-muted rounded-lg transition-colors" title="Visibility">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-                <div className="absolute right-0 mt-1 w-40 bg-white border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                  {(['All', 'My Content', 'Shared with Me'] as const).map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => setFilters({ ...filters, visibility: option })}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                        filters.visibility === option ? 'bg-radar-primary/10 font-medium' : ''
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* AND/OR toggle */}
-              <div className="flex items-center gap-0.5 bg-muted rounded-full p-0.5">
-                <button
-                  onClick={() => setFilterLogic('OR')}
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all ${
-                    filterLogic === 'OR' ? 'bg-white shadow-sm' : 'text-muted-foreground'
-                  }`}
-                  title="Show items matching ANY selected filter"
-                >
-                  OR
-                </button>
-                <button
-                  onClick={() => setFilterLogic('AND')}
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all ${
-                    filterLogic === 'AND' ? 'bg-white shadow-sm' : 'text-muted-foreground'
-                  }`}
-                  title="Show items matching ALL selected filters"
-                >
-                  AND
-                </button>
-              </div>
-
-              {/* Clear all button */}
-              <button
-                onClick={() => setFilters({
-                  topics: [],
-                  categories: [],
-                  steep: [],
-                  geographies: [],
-                  industries: [],
-                  visibility: 'All'
-                })}
-                className="text-sm text-muted-foreground hover:text-foreground font-medium"
-              >
-                Clear all
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-                            
-            </div>
-
-            {initialData.filterOptions.topics.length > 0 && (
-              <MultiSelectFilter
-                label="Topics"
-                options={initialData.filterOptions.topics.map((t: any) => ({ id: t.id, name: t.topic_name }))}
-                selectedIds={filters.topics}
-                onChange={(ids) => setFilters({ ...filters, topics: ids })}
-              />
-            )}
-
-            {initialData.filterOptions.categories.length > 0 && (
-              <MultiSelectFilter
-                label="Categories"
-                options={initialData.filterOptions.categories.map((c: any) => ({ id: c.id, name: c.category_name }))}
-                selectedIds={filters.categories}
-                onChange={(ids) => setFilters({ ...filters, categories: ids })}
-              />
-            )}
-
-            {initialData.filterOptions.steep_categories && initialData.filterOptions.steep_categories.length > 0 && (
-              <MultiSelectFilter
-                label="STEEP"
-                options={initialData.filterOptions.steep_categories.map((s: any) => ({ id: s.id, name: s.name }))}
-                selectedIds={filters.steep}
-                onChange={(ids) => setFilters({ ...filters, steep: ids })}
-              />
-            )}
-
-            {initialData.filterOptions.geographical_focus.length > 0 && (
-              <MultiSelectFilter
-                label="Geography"
-                options={initialData.filterOptions.geographical_focus.map((g: any) => ({ id: g.id, name: g.region_name }))}
-                selectedIds={filters.geographies}
-                onChange={(ids) => setFilters({ ...filters, geographies: ids })}
-              />
-            )}
-
-            {initialData.filterOptions.industries.length > 0 && (
-              <MultiSelectFilter
-                label="Industries"
-                options={initialData.filterOptions.industries.map((i: any) => ({ id: i.id, name: i.industry_name }))}
-                selectedIds={filters.industries}
-                onChange={(ids) => setFilters({ ...filters, industries: ids })}
-              />
-            )}
-          </div>
-        </div>
-      )}
-
+      {/* Card Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {activeTab === 'uploads' && paginatedData.reports.map((report) => (
           <ReportCard key={report.id} report={report} router={router} />
@@ -448,6 +324,143 @@ export default function LibraryPage({ initialData, userId }: LibraryPageProps) {
           <p className="text-muted-foreground">No evidence found</p>
         </div>
       )}
+
+      {/* Filter Drawer */}
+      {showFilters && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/20 z-40 transition-opacity"
+            onClick={() => setShowFilters(false)}
+          />
+
+          {/* Drawer */}
+          <div className="fixed top-0 right-0 h-full w-full md:w-[500px] bg-white shadow-2xl z-50 flex flex-col border-l border-border">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div className="flex items-center gap-3">
+                <Filter className="w-5 h-5 text-radar-primary" />
+                <div>
+                  <h2 className="font-nav font-semibold text-lg">Filters</h2>
+                  <p className="text-xs text-muted-foreground">{activeCount} results</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFilters({
+                    topics: [],
+                    categories: [],
+                    steep: [],
+                    geographies: [],
+                    industries: [],
+                    visibility: 'All'
+                  })}
+                  className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+                >
+                  Clear all
+                </button>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+              {/* Visibility */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Visibility</label>
+                <select
+                  value={filters.visibility}
+                  onChange={(e) => setFilters({ ...filters, visibility: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-radar-primary focus:border-transparent"
+                >
+                  <option value="All">All Content</option>
+                  <option value="My Content">My Content</option>
+                  <option value="Shared with Me">Shared with Me</option>
+                </select>
+              </div>
+
+              {/* Topics */}
+              <MultiSelectFilter
+                label="Topics"
+                options={initialData.filterOptions.topics?.map((t: any) => ({ id: t.id, name: t.topic_name })) || []}
+                selectedIds={filters.topics}
+                onChange={(topics) => setFilters({ ...filters, topics })}
+              />
+
+              {/* Categories */}
+              <MultiSelectFilter
+                label="Categories"
+                options={initialData.filterOptions.categories?.map((c: any) => ({ id: c.id, name: c.category_name })) || []}
+                selectedIds={filters.categories}
+                onChange={(categories) => setFilters({ ...filters, categories })}
+              />
+
+              {/* STEEP */}
+              <MultiSelectFilter
+                label="STEEP"
+                options={initialData.filterOptions.steep_categories?.map((s: any) => ({ id: s.id, name: s.name })) || []}
+                selectedIds={filters.steep}
+                onChange={(steep) => setFilters({ ...filters, steep })}
+              />
+
+              {/* Geography */}
+              <MultiSelectFilter
+                label="Geography"
+                options={initialData.filterOptions.geographical_focus?.map((g: any) => ({ id: g.id, name: g.region_name })) || []}
+                selectedIds={filters.geographies}
+                onChange={(geographies) => setFilters({ ...filters, geographies })}
+              />
+
+              {/* Industries */}
+              <MultiSelectFilter
+                label="Industries"
+                options={initialData.filterOptions.industries?.map((i: any) => ({ id: i.id, name: i.industry_name })) || []}
+                selectedIds={filters.industries}
+                onChange={(industries) => setFilters({ ...filters, industries })}
+              />
+            </div>
+
+            {/* Footer with AND/OR */}
+            <div className="border-t border-border px-6 py-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Filter Logic:</label>
+                <div className="flex items-center gap-0.5 bg-muted rounded-full p-0.5">
+                  <button
+                    onClick={() => setFilterLogic('OR')}
+                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
+                      filterLogic === 'OR' ? 'bg-white shadow-sm' : 'text-muted-foreground'
+                    }`}
+                    title="Show items matching ANY selected filter"
+                  >
+                    OR
+                  </button>
+                  <button
+                    onClick={() => setFilterLogic('AND')}
+                    className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
+                      filterLogic === 'AND' ? 'bg-white shadow-sm' : 'text-muted-foreground'
+                    }`}
+                    title="Show items matching ALL selected filters"
+                  >
+                    AND
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Chat Drawer */}
+      <ChatDrawer 
+        isOpen={chatOpen} 
+        onClose={() => setChatOpen(false)} 
+        userId={userId}
+      />
     </div>
   )
 }
@@ -520,7 +533,6 @@ function EntityCard({ entity, type, router }: { entity: Driver | Trend | Signal 
       
       <div className="p-5 flex flex-col flex-1 overflow-visible relative">
         {isEvidence ? (
-          // Evidence: Evidence type pill with methodology info icon
           <>
             <div className="mb-3 flex items-center gap-2">
               {entity.evidence_type && (
@@ -542,7 +554,6 @@ function EntityCard({ entity, type, router }: { entity: Driver | Trend | Signal 
             </p>
           </>
         ) : (
-          // Other entities: Headline + description
           <>
             <h3 className="font-headline font-bold text-lg mb-2 leading-tight">{name}</h3>
             
